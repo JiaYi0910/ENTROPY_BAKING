@@ -16,24 +16,56 @@ const db = getFirestore(app);
 // 全域變數：存放從 Firebase 抓下來的商品
 let allProducts = [];
 
-// 💡 媽媽指定的專屬訂購連結 (請在此處填入實際網址)
+// 💡 媽媽指定的專屬訂購連結
 const MOM_ORDER_URL = "http://www.freeshops.co/cs/94gev4b5"; 
 
-// 1. 開場動畫計時器與營業狀態
+// 1. 🌟 升級版開場動畫與滾動偵測動畫初始化
 window.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById("splash-screen");
   if (splash) {
-    setTimeout(() => { splash.style.animation = 'fadeOut 1s ease forwards'; }, 4000);
-    setTimeout(() => { splash.remove(); }, 5000);
+    // 停留 1.2 秒讓客人看清楚精緻 Logo，然後像布幕一樣優雅往上收起
+    setTimeout(() => { 
+      splash.classList.add('fade-out'); 
+    }, 1200);
+    setTimeout(() => { 
+      splash.remove(); 
+      initScrollAnimations(); // 開場結束後啟動滾動淡入特效
+    }, 2000);
+  } else {
+    initScrollAnimations();
   }
   
   checkBusinessStatus();
 });
 
+// 🌟 滾動偵測：當區塊進入畫面時自動柔和浮現
+function initScrollAnimations() {
+  const observerOptions = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.15
+  };
+
+  const observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target); // 動畫跑過一次就好
+      }
+    });
+  }, observerOptions);
+
+  document.querySelectorAll('.fade-in-section').forEach(section => {
+    observer.observe(section);
+  });
+}
+
 // 2. LINE 好友驗證確認按鈕
 document.getElementById('btn-confirm-friend').addEventListener('click', () => {
   document.getElementById('line-friend-check').style.display = 'none';
   document.getElementById('menu-wrapper').style.display = 'block';
+  // 重新觸發一次滾動監聽確保解鎖後內容順利浮現
+  initScrollAnimations();
 });
 
 // 3. 自動檢測營業狀態 (10:00 - 20:00，例假日公休)
@@ -129,7 +161,7 @@ function renderProducts(products) {
         flavorBadgesHTML = `<span class="flavor-badge"># 精選風味</span>`;
       }
 
-      // 動態模擬風味雷達比例（根據烘焙度與風味文字自動賦予視覺長條感）
+      // 動態模擬風味雷達比例
       let acidLevel = 70;
       let sweetLevel = 80;
       let bodyLevel = 75;
@@ -204,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// 8. Cookie 同意條款互動邏輯 (串接 privacy.html)
+// 8. Cookie 同意條款互動邏輯
 const consentEl = document.getElementById('cookie-consent');
 const acceptBtn = document.getElementById('accept-cookie-btn');
 
