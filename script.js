@@ -19,16 +19,20 @@ let allProducts = [];
 // 💡 指定的專屬訂購連結
 const MOM_ORDER_URL = "http://www.freeshops.co/cs/94gev4b5"; 
 
-// 1. 開場動畫初始化（保持原本的開場質感）
+// 1. 開場動畫與驗證狀態初始化
 window.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById("splash-screen");
   if (splash) {
-    setTimeout(() => { 
-      splash.classList.add('fade-out'); 
-    }, 1200);
-    setTimeout(() => { 
-      splash.remove(); 
-    }, 2000);
+    setTimeout(() => { splash.classList.add('fade-out'); }, 1200);
+    setTimeout(() => { splash.remove(); }, 2000);
+  }
+
+  // 檢查是否已經通過 LINE 好友驗證
+  if (getCookie('lineVerified') === 'true') {
+    const friendCheck = document.getElementById('line-friend-check');
+    const menuWrapper = document.getElementById('menu-wrapper');
+    if (friendCheck) friendCheck.style.display = 'none';
+    if (menuWrapper) menuWrapper.style.display = 'block';
   }
   
   initScrollAnimations();
@@ -47,7 +51,7 @@ function initScrollAnimations() {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target); // 動畫跑過一次就好
+        observer.unobserve(entry.target);
       }
     });
   }, observerOptions);
@@ -57,13 +61,18 @@ function initScrollAnimations() {
   });
 }
 
-// 2. LINE 好友驗證確認按鈕
-document.getElementById('btn-confirm-friend').addEventListener('click', () => {
-  document.getElementById('line-friend-check').style.display = 'none';
-  document.getElementById('menu-wrapper').style.display = 'block';
-  // 重新觸發一次滾動監聽確保解鎖後內容順利浮現
-  initScrollAnimations();
-});
+// 2. LINE 好友驗證確認按鈕（點擊後記住狀態並解鎖主選單）
+const confirmBtn = document.getElementById('btn-confirm-friend');
+if (confirmBtn) {
+  confirmBtn.addEventListener('click', () => {
+    setCookie('lineVerified', 'true', 30); // 記住驗證狀態 30 天
+    const friendCheck = document.getElementById('line-friend-check');
+    const menuWrapper = document.getElementById('menu-wrapper');
+    if (friendCheck) friendCheck.style.display = 'none';
+    if (menuWrapper) menuWrapper.style.display = 'block';
+    initScrollAnimations();
+  });
+}
 
 // 3. 自動檢測營業狀態 (10:00 - 20:00，例假日公休)
 function checkBusinessStatus() {
@@ -103,14 +112,15 @@ const searchInput = document.getElementById('searchInput');
 const filterRoast = document.getElementById('filterRoast');
 const filterOrigin = document.getElementById('filterOrigin');
 
-searchInput.addEventListener('input', filterProducts);
-filterRoast.addEventListener('change', filterProducts);
-filterOrigin.addEventListener('change', filterProducts);
+if (searchInput) searchInput.addEventListener('input', filterProducts);
+if (filterRoast) filterRoast.addEventListener('change', filterProducts);
+if (filterOrigin) filterOrigin.addEventListener('change', filterProducts);
 
 function filterProducts() {
-  const keyword = searchInput.value.trim().toLowerCase();
-  const roast = filterRoast.value;
-  const origin = filterOrigin.value;
+  if (!coffeeContainer) return;
+  const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  const roast = filterRoast ? filterRoast.value : '';
+  const origin = filterOrigin ? filterOrigin.value : '';
 
   const filtered = allProducts.filter(p => {
     const name = p.name || '';
@@ -135,8 +145,9 @@ function filterProducts() {
   renderProducts(filtered);
 }
 
-// 6. 渲染商品卡片 (內含風味雷達視覺條與標籤)
+// 6. 渲染商品卡片
 function renderProducts(products) {
+  if (!coffeeContainer) return;
   coffeeContainer.innerHTML = '';
   if (products.length === 0) {
     coffeeContainer.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 40px 0;">查無符合條件的咖啡豆</p>';
@@ -145,7 +156,6 @@ function renderProducts(products) {
       const card = document.createElement('div');
       card.className = 'product-card';
 
-      // 風味標籤處理
       let flavorBadgesHTML = '';
       if (product.flavor_notes && product.flavor_notes !== '無') {
         const notes = product.flavor_notes.split(/[,，、\s]+/);
@@ -158,7 +168,6 @@ function renderProducts(products) {
         flavorBadgesHTML = `<span class="flavor-badge"># 精選風味</span>`;
       }
 
-      // 動態模擬風味雷達比例
       let acidLevel = 70;
       let sweetLevel = 80;
       let bodyLevel = 75;
@@ -178,7 +187,6 @@ function renderProducts(products) {
             <div class="product-info"><b>風味描述：</b>${product.flavor_notes || '無'}</div>
           </div>
 
-          <!-- ☕ 咖啡風味雷達視覺條 -->
           <div class="flavor-radar-wrap">
             <div class="flavor-radar-title">
               <span>☕ 風味特性指引</span>
@@ -212,7 +220,7 @@ function renderProducts(products) {
   }
 }
 
-// 公告欄與 VIP 儲值方案的收合互動動畫
+// 7. 公告欄與 VIP 儲值方案的收合互動動畫
 document.addEventListener('DOMContentLoaded', () => {
   // 1. 公告欄收合控制
   const noticeToggle = document.getElementById('notice-toggle');
@@ -257,10 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// 8. Cookie 同意條款互動邏輯
-const consentEl = document.getElementById('cookie-consent');
-const acceptBtn = document.getElementById('accept-cookie-btn');
-
+// 8. Cookie 工具與同意條款互動邏輯
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -273,6 +278,9 @@ function setCookie(name, value, days) {
   d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
   document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
 }
+
+const consentEl = document.getElementById('cookie-consent');
+const acceptBtn = document.getElementById('accept-cookie-btn');
 
 if (getCookie('cookieConsent') === 'true') {
   if (consentEl) consentEl.style.display = 'none';
