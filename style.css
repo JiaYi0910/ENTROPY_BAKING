@@ -1,567 +1,643 @@
+/* ==========================================
+   Swiss Minimalist Aesthetics & Global Reset
+   ========================================== */
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg-color: #fdfbf7;         /* 溫暖燕麥米色背景 */
+    --card-bg: #ffffff;          /* 卡片純白 */
+    --text-main: #4a3b32;        /* 沉穩咖啡豆棕 */
+    --text-muted: #8c7a6b;       /* 柔和灰褐色 */
+    --accent-color: #b08968;     /* 焦糖質感金棕 */
+    --accent-hover: #9c7553;     /* 焦糖深色 */
+    --border-color: #e6dfd5;     /* 柔和邊框色 */
+    --line-green: #06c755;       /* LINE 官方綠 */
+    --font-serif: 'Noto Serif TC', serif;
+    --font-sans: 'Plus Jakarta Sans', sans-serif;
 }
 
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f3f2ef;
-  margin: 0;
-  padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: var(--font-sans), sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
 
-html{
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
+/* ==========================================
+   1. 加入好友提醒區 (LINE Check Overlay)
+   ========================================== */
+#line-friend-check {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(74, 59, 50, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 20px;
 }
 
-/* 開場動畫區 */
+.friend-check-card {
+    background: var(--card-bg);
+    padding: 40px 30px;
+    border-radius: 16px;
+    text-align: center;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    border: 1px solid var(--border-color);
+}
+
+.friend-check-badge {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--accent-color);
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.friend-check-card h2 {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    color: var(--text-main);
+    margin-bottom: 16px;
+}
+
+.friend-check-card p {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    line-height: 1.7;
+}
+
+.friend-check-card p span {
+    color: var(--line-green);
+    font-weight: 600;
+}
+
+.btn-primary-line {
+    display: block;
+    background-color: var(--line-green);
+    color: white;
+    text-decoration: none;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 12px;
+    transition: opacity 0.2s;
+}
+
+.btn-primary-line:hover { opacity: 0.9; }
+
+.btn-secondary-check {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.btn-secondary-check:hover {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    border-color: var(--text-muted);
+}
+
+/* ==========================================
+   2. 開場動畫 (Splash Screen)
+   ========================================== */
 #splash-screen {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9998;
 }
 
-#splash-screen img {
-  width: 60%;
-  max-width: 400px;
-  border-radius: 12px;
-  opacity: 0;
-  animation: fadeIn 1.5s ease forwards;
-  animation-delay: 0.5s;
+.splash-content { text-align: center; }
+
+.splash-content img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
-
-.splash-text {
-  margin-top: 1.5rem;
-  text-align: center;
-  color: #2f4f4f;
-  font-weight: bold;
-  opacity: 0;
-  animation: fadeInUp 1s ease forwards;
-  animation-delay: 1.5s;
-  font-size: 1.5rem;
-  line-height: 1.4;
+.splash-content h1 {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    color: var(--text-main);
+    letter-spacing: 2px;
 }
 
-.splash-text span {
-  font-size: 1rem;
-  font-weight: normal;
-  letter-spacing: 2px;
-  display: block;
+.splash-content h1 span {
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    letter-spacing: 4px;
 }
 
-/* 動畫 */
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 @keyframes fadeOut {
-  to { opacity: 0; visibility: hidden; pointer-events: none; }
+    to { opacity: 0; visibility: hidden; }
 }
 
+/* ==========================================
+   3. 懸浮 LINE 按鈕
+   ========================================== */
+.floating-line-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background-color: var(--line-green);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(6, 199, 85, 0.3);
+    z-index: 100;
+    transition: transform 0.2s;
+}
 
+.floating-line-btn:hover { transform: scale(1.05); }
+
+/* ==========================================
+   4. Header 區塊與營業狀態燈號
+   ========================================== */
 .site-header {
-  width: 100%; /* ← 修正關鍵 */
-  background-color: #2f4f4f;
-  color: #fff;
-  text-align: center;
-  padding: 20px;
-  margin: 0;
-  box-sizing: border-box;
+    text-align: center;
+    padding: 40px 20px 30px;
+    background: linear-gradient(to bottom, #f5efe6, var(--bg-color));
+}
+
+.status-badge-open, .status-badge-closed {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+}
+.status-badge-open {
+    background-color: #e6f4ea;
+    color: #137333;
+    border: 1px solid #ceead6;
+}
+.status-badge-closed {
+    background-color: #fce8e6;
+    color: #c5221f;
+    border: 1px solid #fad2cf;
 }
 
 .site-header h1 {
-  margin: 0;
-  font-size: 28px;
+    font-family: var(--font-serif);
+    font-size: 36px;
+    color: var(--text-main);
+    letter-spacing: 4px;
+    margin-bottom: 4px;
 }
+
 .site-header h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: normal;
-  letter-spacing: 2px;
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
 }
 
-/* footer 隱私權文案 */
-footer {
-  width: 99vw; /* 滿整個視窗寬度 */
-  margin-left: calc(-49vw + 49%);
-  background-color: #2f4f4f; /* 墨綠色 */
-  color: #f0f0e6;
-  text-align: center;
-  padding: 15px 12px;
-}
-footer a {
-  color: #f2b700;
-  text-decoration: underline;
-}
-.footer-privacy {
-  margin: 0;
-  font-size: 14px;
+.header-subtitle {
+    font-size: 14px;
+    color: var(--accent-color);
+    font-weight: 500;
 }
 
-
-#menu-wrapper {
-  width: 100%;
-  max-width: 100%;
+/* ==========================================
+   5. 獨立卡片區塊 (公告與儲值方案 - 絕不黏在一起)
+   ========================================== */
+.content-section {
+    max-width: 800px;
+    margin: 0 auto 30px;
+    padding: 0 20px;
 }
 
-.product-list {
-  padding: 20px;
+.card-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(74, 59, 50, 0.03);
 }
 
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  padding: 20px;
+.box-title {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
 }
 
-.product-card {
-  background-color: #ffffff;
-  border-radius: 10px;
-  border: 1px solid #dcdcdc;
-  box-shadow: 0 4px 10px rgba(0, 64, 64, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  padding: 20px;
+/* 公告區塊細節 */
+.card-box-header {
+    padding: 18px 24px;
+    background-color: #f7f3ec;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 18px rgba(0, 64, 64, 0.2);
+#notice-arrow {
+    transition: transform 0.3s ease;
+    font-size: 13px;
+    color: var(--text-muted);
 }
 
-.product-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #264e36;
-  margin-bottom: 8px;
+.card-box-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease-out;
 }
 
-.product-price {
-  color: #c05b2b;
-  font-weight: bold;
-  margin-bottom: 10px;
+.notice-inner {
+    padding: 24px;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.8;
+    border-top: 1px solid var(--border-color);
 }
 
-.product-info {
-  font-size: 14px;
-  color: #444;
-  margin-bottom: 4px;
-  line-height: 1.4;
+.notice-inner strong { color: var(--text-main); }
+
+/* 儲值方案區塊細節 */
+.vip-box {
+    padding: 24px;
+    background: linear-gradient(135deg, #ffffff 0%, #fdfaf6 100%);
+    border-color: #dfd3c3;
 }
 
-
-.cart-button {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: #2f4f4f;
-  color: white;
-  font-size: 24px;
-  text-decoration: none;
-  padding: 12px;
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  z-index: 999;
-  transition: background 0.3s;
+.vip-box-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
 }
 
-.cart-button:hover {
-  background-color: #3e605f;
+.vip-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
 }
 
-
-footer {
-  text-align: center;
-  background-color: #2f4f4f;
-  color: #fff;
-  padding: 10px;
+.vip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
 }
 
-.form-section {
-  margin-top: 20px;
-  padding: 1em;
-  border: 1px dashed #aaa;
-  border-radius: 10px;
-  background-color: #f9f9f9;
+.vip-card {
+    background: #fcf9f5;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    transition: transform 0.2s;
 }
 
-.product-cart-control {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.vip-card:hover { transform: translateY(-2px); }
+
+.vip-card.featured {
+    background: #f7efe6;
+    border-color: var(--accent-color);
+}
+
+.vip-badge-top {
+    position: absolute;
+    top: -10px;
+    right: 16px;
+    background: var(--accent-color);
+    color: white;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.vip-amount {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+
+.vip-bonus {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.vip-bonus span {
+    color: #c05621;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.vip-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.vip-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ==========================================
+   6. 搜尋與篩選列
+   ========================================== */
+.filter-section {
+    max-width: 800px;
+    margin: 0 auto 30px;
+    padding: 0 20px;
 }
 
 .search-area {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  margin: 30px auto 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .search-area input,
 .search-area select {
-  padding: 10px 16px;
-  font-size: 16px;
-  border: 2px solid #2f4f4f;
-  border-radius: 25px;
-  outline: none;
-  background: #fffdf6;
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    flex: 1;
+    min-width: 200px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-main);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
 }
 
 .search-area input:focus,
-.search-area select:focus {
-  border-color: #f2b700;
-  box-shadow: 0 0 0 3px rgba(242, 183, 0, 0.3);
+.search-area select:focus { border-color: var(--accent-color); }
+
+/* ==========================================
+   7. 商品清單與卡片設計 (含風味標籤與指定下單鈕)
+   ========================================== */
+.main-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 20px 20px;
 }
 
-
-/* Container 限寬 */
-body > div, main, .search-area, .notice-bar {
-  max-width: 960px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 12px;
-  padding-right: 12px;
+.section-title-wrap {
+    text-align: center;
+    margin-bottom: 30px;
 }
 
-/* Cookie 通知樣式 */
+.section-title-wrap h2 {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.section-title-wrap p {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.product-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(74, 59, 50, 0.08);
+}
+
+.product-title {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 8px;
+}
+
+.product-price {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 12px;
+}
+
+.product-details-wrap {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.product-info {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.product-info b {
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+/* 風味雷達／標籤樣式 */
+.flavor-tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.flavor-badge {
+    background-color: #f4eee9;
+    color: #6f584c;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+/* 媽媽指定的專屬訂購按鈕 */
+.btn-order-link {
+    display: block;
+    width: 100%;
+    background-color: var(--text-main);
+    color: white;
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.btn-order-link:hover {
+    background-color: var(--accent-color);
+}
+
+/* ==========================================
+   8. 互動式交通與地圖區塊
+   ========================================== */
+.location-box {
+    padding: 24px;
+    background: var(--card-bg);
+}
+
+.location-content {
+    margin-top: 12px;
+}
+
+.info-item {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.info-item strong { color: var(--text-main); }
+
+.map-btn-wrap {
+    margin-top: 16px;
+}
+
+.btn-map {
+    display: inline-block;
+    background-color: #f4eee9;
+    color: var(--text-main);
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.btn-map:hover {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+/* ==========================================
+   9. Cookie 條款與 Footer
+   ========================================== */
 .cookie-consent-banner {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: #2f4f4f;
-  color: #f0f0e6;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
-  font-size: 15px;
-  box-shadow: 0 -4px 8px rgba(0,0,0,0.2);
-  z-index: 10000;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--text-main);
+    color: #fdfbf7;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    font-size: 13px;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
 }
 
-.cookie-consent-banner a {
-  color: #f2b700;
-  text-decoration: underline;
+.cookie-message a {
+    color: #e2c0ad;
+    text-decoration: underline;
 }
 
 .cookie-btn {
-  background-color: #f2b700;
-  border: none;
-  color: #2f4f4f;
-  font-weight: bold;
-  padding: 8px 16px;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  flex-shrink: 0;
-}
-
-.cookie-btn:hover {
-  background-color: #d1a500;
-}
-
-  
-
-/* 📌 公告區塊 */
-.notice-bar {
-  background-color: #e6f0ed;
-  border-left: 5px solid #2f4f4f;
-  border-radius: 5px;
-  padding: 15px;
-  flex-grow: 1;
-  min-width: 280px;      /* 稍微縮小最小寬度，適應小螢幕 */
-  max-width: 90vw;       /* 最大寬度改成90%視窗寬度，避免超出 */
-  box-sizing: border-box; /* 確保padding不會讓寬度超出 */
-  margin: 0 auto;       /* 置中(若是單獨區塊使用) */
-  margin-top: 25px;
-}
-
-/* 新增：公告頂部標題區塊（含箭頭） */
-.notice-header {
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center;
-  cursor: pointer;
-  user-select: none; /* 防止連續點擊時文字變藍色選取狀態 */
-}
-
-/* 📢 標題優化 */
-.notice-bar h3 {
-  color: #2f4f4f;
-  margin: 0; /* 清除上下間拒，讓收合時高度最精簡 */
-  font-size: 1.17rem;
-}
-
-/* 新增：右側小箭頭樣式 */
-#notice-arrow {
-  color: #2f4f4f;
-  font-size: 14px;
-  transition: transform 0.3s ease; /* 讓箭頭旋轉有流暢動畫 */
-}
-
-/* 修正：公告內容容器（控制動畫的核心） */
-.notice-content {
-  max-height: 0;            /* 預設隱藏 */
-  overflow: hidden;         /* 超出範圍隱藏 */
-  transition: max-height 0.3s ease-out; /* 展開時的平滑動畫 */
-}
-
-/* 📄 公告文字段落 */
-.notice-content p {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #333;
-  margin: 0;
-  padding-bottom: 1.5rem; /* 改用 padding 代替 margin-bottom，動畫展開時才不會抖動抖動 */
-}
-
-/* 讓第一個段落與標題之間有一點舒適的空隙 */
-.notice-content p:first-child {
-  padding-top: 1.5rem; 
-}
-
-/* 讓最後一個段落底部不要留太多空白 */
-.notice-content p:last-child {
-  padding-bottom: 0.5rem;
-}
-
-#line-friend-check {
-  max-width: 400px;
-  margin: 40px auto;
-  padding: 30px 20px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  background: #f9f9f9;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  text-align: center;
-  color: #333;
-}
-
-#line-friend-check p {
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-  font-weight: 600;
-}
-
-#line-friend-check p span {
-  color: #00c300;
-}
-
-#line-friend-check a {
-  display: inline-block;
-  margin: 0 0 25px 0;
-  padding: 14px 40px;
-  background: linear-gradient(45deg, #00c300, #00a000);
-  color: #fff;
-  font-weight: 700;
-  font-size: 1.1rem;
-  border-radius: 30px;
-  text-decoration: none;
-  box-shadow: 0 4px 10px rgba(0, 195, 0, 0.4);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-}
-
-#line-friend-check a:hover {
-  background: linear-gradient(45deg, #00a000, #008000);
-  box-shadow: 0 6px 14px rgba(0, 160, 0, 0.6);
-}
-
-#line-friend-check button {
-  cursor: pointer;
-  padding: 12px 36px;
-  font-size: 1rem;
-  border-radius: 30px;
-  border: none;
-  background-color: #444;
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-  transition: background-color 0.3s ease;
-}
-
-#line-friend-check button:hover {
-  background-color: #222;
-}
-
-.floating-line-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background-color: #00c300;
-  color: white;
-  padding: 14px 22px;
-  border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(0, 195, 0, 0.6);
-  font-weight: bold;
-  font-size: 16px;
-  text-decoration: none;
-  z-index: 10000;
-  transition: background-color 0.3s ease;
-}
-
-.floating-line-btn:hover {
-  background-color: #00a500;
-  box-shadow: 0 6px 14px rgba(0, 165, 0, 0.8);
-}
-
-
-
-
-/* 手機優化 */
-@media (max-width: 600px) {
-  body {
-    font-size: 16px;
-    line-height: 1.5;
-  }
-  .site-header h1 {
-    font-size: 22px;
-  }
-  .site-header h2 {
-    font-size: 14px;
-  }
-  .notice-content p {
-    font-size: 14px;
-  }
-  /* 搜尋與篩選容器 */
-  .search-area {
-    display: flex;
-    flex-direction: column;  /* 垂直堆疊 */
-    gap: 10px;
-    padding: 0 10px;
-    margin: 1rem 0;
-  }
-  .search-area input,
-  .search-area select {
-    width: 100%;
-    padding: 8px 12px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    box-sizing: border-box;
-  }
-  .search-area button {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 12px;
-    background-color: #2f4f4f;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  .search-area button:hover {
-    background-color: #3e605f;
-  }
-  /* footer 區塊 */
-  footer {
-    padding: 20px 15px;
-    font-size: 14px;
-    color: #444;
-    background-color: #f9f9f9;
-    text-align: center;
-  }
-  footer p {
-    margin: 8px 0;
-    line-height: 1.5;
-  }
-  footer a {
-    color: #2f4f4f;
-    text-decoration: underline;
-  }
-  footer a:hover {
-    opacity: 0.7;
-  }
-
-  .cookie-consent-banner {
-    flex-direction: column;
-    text-align: center;
-    gap: 8px;
-  }
-  .cookie-btn {
-    width: 100%;
-  }
-
-  /* 加入 LINE 好友區塊手機優化 */
-  #line-friend-check {
-    margin: 20px 15px;
-    padding: 25px 15px;
-  }
-  #line-friend-check p {
-    font-size: 1rem;
-    margin-bottom: 16px;
-  }
-  #line-friend-check a {
-    padding: 12px 30px;
-    font-size: 1rem;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  #line-friend-check button {
-    width: 100%;
-    padding: 12px 0;
-    font-size: 1rem;
-  }
-
-  .floating-line-btn {
-    padding: 12px;
-    font-size: 14px;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .floating-line-btn::after {
-    content: "＋";
-    font-size: 24px;
-  }
-  /* 隱藏文字 */
-  .floating-line-btn {
+    background: var(--accent-color);
     color: white;
-    text-indent: -9999px;
-    overflow: hidden;
-  }
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: opacity 0.2s;
 }
 
-/* 平板優化 */
-@media (min-width: 601px) and (max-width: 768px) {
-  #line-friend-check {
-    max-width: 320px;
-    margin: 30px auto;
-    padding: 28px 20px;
-  }
-  #line-friend-check a {
-    padding: 13px 35px;
-    font-size: 1.05rem;
-  }
+.cookie-btn:hover { opacity: 0.9; }
+
+footer {
+    text-align: center;
+    padding: 40px 20px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 13px;
+    background-color: #f5efe6;
+    margin-top: 40px;
 }
 
+.footer-content p { margin-bottom: 6px; }
+
+.footer-privacy a {
+    color: var(--text-main);
+    text-decoration: underline;
+}
+
+/* ==========================================
+   響應式調整 (Mobile)
+   ========================================== */
+@media (max-width: 600px) {
+    .site-header { padding: 30px 15px 20px; }
+    .site-header h1 { font-size: 28px; }
+    .search-area { flex-direction: column; }
+    .search-area input, .search-area select { width: 100%; }
+    .cookie-consent-banner {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+}
