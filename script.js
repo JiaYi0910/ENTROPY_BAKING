@@ -31,7 +31,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 2000);
   }
   
-  // 確保一開始若通過好友驗證，選單能正常顯示
+  // 💡 確保開場動畫結束後，直接顯示主選單（如果不需要強制綁定驗證的話）
+  // 或者是讓驗證通過後才隱藏好友檢查卡片
+  document.getElementById('menu-wrapper').style.display = 'block';
+  document.getElementById('line-friend-check').style.display = 'none';
+
   initScrollAnimations();
   checkBusinessStatus();
 });
