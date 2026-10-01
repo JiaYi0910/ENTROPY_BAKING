@@ -53,7 +53,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (getCookie('lineVerified') === 'true') {
       if (menuWrapper) menuWrapper.style.display = 'block';
     } else {
-      if (friendCheck) friendCheck.style.display = 'flex';
+      if (friendCheck) {
+        friendCheck.style.display = 'flex';
+      }
     }
   }
   
@@ -146,23 +148,17 @@ function filterProducts() {
   renderProducts(filtered);
 }
 
-// 💡 輔助函式：將分數（0-100）轉為 5 個極簡小圓點
-function renderRatingDots(score) {
-  const totalDots = 5;
-  const activeCount = Math.round((score / 100) * totalDots);
-  
-  let dotsHTML = '';
-  for (let i = 1; i <= totalDots; i++) {
-    if (i <= activeCount) {
-      dotsHTML += '<span class="dot active">●</span>';
-    } else {
-      dotsHTML += '<span class="dot">◯</span>';
-    }
-  }
-  return dotsHTML;
+// 💡 輔助函式：將分數（0-100）轉為座標軸滑軌指標
+function renderSpectrumBar(score) {
+  const percent = Math.max(0, Math.min(100, score));
+  return `
+    <div class="spectrum-track">
+      <div class="spectrum-thumb" style="left: ${percent}%;"></div>
+    </div>
+  `;
 }
 
-// 6. 渲染商品卡片（改用極簡小圓點呈現）
+// 6. 渲染商品卡片（改用極簡滑軌座標軸呈現）
 function renderProducts(products) {
   if (!coffeeContainer) return;
   coffeeContainer.innerHTML = '';
@@ -211,15 +207,15 @@ function renderProducts(products) {
             <div class="radar-bars">
               <div class="radar-row">
                 <span class="radar-label">酸度</span>
-                <div class="rating-dots">${renderRatingDots(acidLevel)}</div>
+                ${renderSpectrumBar(acidLevel)}
               </div>
               <div class="radar-row">
                 <span class="radar-label">甜感</span>
-                <div class="rating-dots">${renderRatingDots(sweetLevel)}</div>
+                ${renderSpectrumBar(sweetLevel)}
               </div>
               <div class="radar-row">
                 <span class="radar-label">醇厚</span>
-                <div class="rating-dots">${renderRatingDots(bodyLevel)}</div>
+                ${renderSpectrumBar(bodyLevel)}
               </div>
             </div>
           </div>
