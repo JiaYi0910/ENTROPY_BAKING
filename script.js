@@ -215,49 +215,50 @@ function renderProducts(products) {
   }
 }
 
-// 7. 公告欄收合互動動畫
+// 公告欄與 VIP 儲值方案的收合互動動畫
 document.addEventListener('DOMContentLoaded', () => {
+  // 1. 公告欄收合控制
   const noticeToggle = document.getElementById('notice-toggle');
   const noticeBody = document.getElementById('notice-body');
+  const noticeText = document.getElementById('notice-text');
   const noticeArrow = document.getElementById('notice-arrow');
 
-  if (noticeToggle && noticeBody && noticeArrow) {
+  if (noticeToggle && noticeBody) {
     noticeToggle.addEventListener('click', () => {
-      // 檢查目前是否為展開狀態
       const isOpen = noticeBody.style.maxHeight && noticeBody.style.maxHeight !== '0px' && noticeBody.style.maxHeight !== '0';
       if (isOpen) {
         noticeBody.style.maxHeight = '0px';
-        noticeArrow.style.transform = 'rotate(0deg)';
-        noticeArrow.innerText = '▼ 展開';
+        if (noticeText) noticeText.innerText = '展開';
+        if (noticeArrow) noticeArrow.innerText = '▼';
       } else {
         noticeBody.style.maxHeight = noticeBody.scrollHeight + 'px';
-        noticeArrow.style.transform = 'rotate(180deg)';
-        noticeArrow.innerText = '▲ 收合';
+        if (noticeText) noticeText.innerText = '收合';
+        if (noticeArrow) noticeArrow.innerText = '▲';
       }
     });
   }
 
-  // 8. VIP 儲值方案收合控制
+  // 2. VIP 儲值方案收合控制
   const vipToggle = document.getElementById('vip-toggle');
   const vipBody = document.getElementById('vip-body');
+  const vipText = document.getElementById('vip-text');
   const vipArrow = document.getElementById('vip-arrow');
 
-  if (vipToggle && vipBody && vipArrow) {
+  if (vipToggle && vipBody) {
     vipToggle.addEventListener('click', () => {
       const isOpen = vipBody.style.maxHeight && vipBody.style.maxHeight !== '0px' && vipBody.style.maxHeight !== '0';
       if (isOpen) {
         vipBody.style.maxHeight = '0px';
-        vipArrow.style.transform = 'rotate(0deg)';
-        vipArrow.innerText = '▼ 展開';
+        if (vipText) vipText.innerText = '展開';
+        if (vipArrow) vipArrow.innerText = '▼';
       } else {
         vipBody.style.maxHeight = vipBody.scrollHeight + 'px';
-        vipArrow.style.transform = 'rotate(180deg)';
-        vipArrow.innerText = '▲ 收合';
+        if (vipText) vipText.innerText = '收合';
+        if (vipArrow) vipArrow.innerText = '▲';
       }
     });
   }
 });
-
 
 // 8. Cookie 同意條款互動邏輯
 const consentEl = document.getElementById('cookie-consent');
