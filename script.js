@@ -43,7 +43,6 @@ window.addEventListener('DOMContentLoaded', () => {
       if (getCookie('lineVerified') === 'true') {
         // 如果驗證過了，直接顯示主選單與商品
         if (menuWrapper) menuWrapper.style.display = 'block';
-        initScrollAnimations();
       } else {
         // 沒驗證過：開場動畫跑完後，才彈出加好友視窗！
         if (friendCheck) {
@@ -56,7 +55,6 @@ window.addEventListener('DOMContentLoaded', () => {
     // 如果沒有開場動畫的備用邏輯
     if (getCookie('lineVerified') === 'true') {
       if (menuWrapper) menuWrapper.style.display = 'block';
-      initScrollAnimations();
     } else {
       if (friendCheck) friendCheck.style.display = 'flex';
     }
@@ -64,28 +62,6 @@ window.addEventListener('DOMContentLoaded', () => {
   
   checkBusinessStatus();
 });
-
-// 🌟 滾動偵測：當區塊進入畫面時自動柔和浮現
-function initScrollAnimations() {
-  const observerOptions = {
-    root: null,
-    rootMargin: '0px',
-    threshold: 0.15
-  };
-
-  const observer = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, observerOptions);
-
-  document.querySelectorAll('.fade-in-section').forEach(section => {
-    observer.observe(section);
-  });
-}
 
 // 2. LINE 好友驗證確認按鈕（點擊後關閉彈窗，主選單與商品瞬間展開）
 const confirmBtn = document.getElementById('btn-confirm-friend');
@@ -99,7 +75,6 @@ if (confirmBtn) {
     if (menuWrapper) {
       menuWrapper.style.display = 'block';
     }
-    initScrollAnimations();
   });
 }
 
@@ -174,7 +149,7 @@ function filterProducts() {
   renderProducts(filtered);
 }
 
-// 6. 渲染商品卡片
+// 6. 渲染商品卡片（內含雷達條動態延遲展開）
 function renderProducts(products) {
   if (!coffeeContainer) return;
   coffeeContainer.innerHTML = '';
@@ -187,7 +162,7 @@ function renderProducts(products) {
 
       let flavorBadgesHTML = '';
       if (product.flavor_notes && product.flavor_notes !== '無') {
-        const notes = product.flavor_notes.split(/[,，、\s]+/);
+        const notes = product.flavor_notes.split(/[,[,，、\s]+/);
         notes.forEach(note => {
           if (note.trim()) {
             flavorBadgesHTML += `<span class="flavor-badge"># ${note.trim()}</span>`;
@@ -223,15 +198,15 @@ function renderProducts(products) {
             <div class="radar-bars">
               <div class="radar-row">
                 <span class="radar-label">酸度</span>
-                <div class="radar-track"><div class="radar-fill" style="width: ${acidLevel}%;"></div></div>
+                <div class="radar-track"><div class="radar-fill" data-width="${acidLevel}"></div></div>
               </div>
               <div class="radar-row">
                 <span class="radar-label">甜感</span>
-                <div class="radar-track"><div class="radar-fill" style="width: ${sweetLevel}%;"></div></div>
+                <div class="radar-track"><div class="radar-fill" data-width="${sweetLevel}"></div></div>
               </div>
               <div class="radar-row">
                 <span class="radar-label">醇厚</span>
-                <div class="radar-track"><div class="radar-fill" style="width: ${bodyLevel}%;"></div></div>
+                <div class="radar-track"><div class="radar-fill" data-width="${bodyLevel}"></div></div>
               </div>
             </div>
           </div>
@@ -246,12 +221,19 @@ function renderProducts(products) {
       `;
       coffeeContainer.appendChild(card);
     });
+
+    // 🌟 卡片生成後，讓雷達條以極短延遲優雅滑動長出
+    setTimeout(() => {
+      document.querySelectorAll('.radar-fill').forEach(fill => {
+        const targetWidth = fill.getAttribute('data-width');
+        fill.style.width = targetWidth + '%';
+      });
+    }, 100);
   }
 }
 
 // 7. 公告欄與 VIP 儲值方案的收合互動動畫
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. 公告欄收合控制
   const noticeToggle = document.getElementById('notice-toggle');
   const noticeBody = document.getElementById('notice-body');
   const noticeText = document.getElementById('notice-text');
@@ -272,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. VIP 儲值方案收合控制
   const vipToggle = document.getElementById('vip-toggle');
   const vipBody = document.getElementById('vip-body');
   const vipText = document.getElementById('vip-text');
