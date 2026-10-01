@@ -153,7 +153,7 @@ body {
 
 #splash-screen.fade-out {
     opacity: 0;
-    transform: translateY(-100%); /* 像高級布幕一樣往上滑動收起 */
+    transform: translateY(-100%);
     pointer-events: none;
 }
 
@@ -269,7 +269,7 @@ body {
 }
 
 /* ==========================================
-   5. 獨立卡片區塊 (公告與儲值方案)
+   5. 獨立卡片區塊 (公告與 VIP 方案：完全統一格式)
    ========================================== */
 .content-section {
     max-width: 800px;
@@ -306,12 +306,6 @@ body {
     align-items: center;
 }
 
-#notice-arrow {
-    transition: transform 0.3s ease;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
 .card-box-body {
     max-height: 0;
     overflow: hidden;
@@ -327,28 +321,6 @@ body {
 }
 
 .notice-inner strong { color: var(--text-main); }
-
-.vip-box {
-    padding: 24px;
-    background: linear-gradient(135deg, #ffffff 0%, #fdfaf6 100%);
-    border-color: #dfd3c3;
-}
-
-.vip-box-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 8px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 12px;
-}
-
-.vip-subtitle {
-    font-size: 13px;
-    color: var(--text-muted);
-}
 
 .vip-grid {
     display: grid;
