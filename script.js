@@ -223,18 +223,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (noticeToggle && noticeBody && noticeArrow) {
     noticeToggle.addEventListener('click', () => {
-      if (noticeBody.style.maxHeight === '0px' || noticeBody.style.maxHeight === '' || noticeBody.style.maxHeight === '0') {
-        noticeBody.style.maxHeight = noticeBody.scrollHeight + 'px';
-        noticeArrow.style.transform = 'rotate(180deg)';
-        noticeArrow.innerText = '▲ 收合';
-      } else {
+      // 檢查目前是否為展開狀態
+      const isOpen = noticeBody.style.maxHeight && noticeBody.style.maxHeight !== '0px' && noticeBody.style.maxHeight !== '0';
+      if (isOpen) {
         noticeBody.style.maxHeight = '0px';
         noticeArrow.style.transform = 'rotate(0deg)';
         noticeArrow.innerText = '▼ 展開';
+      } else {
+        noticeBody.style.maxHeight = noticeBody.scrollHeight + 'px';
+        noticeArrow.style.transform = 'rotate(180deg)';
+        noticeArrow.innerText = '▲ 收合';
+      }
+    });
+  }
+
+  // 8. VIP 儲值方案收合控制
+  const vipToggle = document.getElementById('vip-toggle');
+  const vipBody = document.getElementById('vip-body');
+  const vipArrow = document.getElementById('vip-arrow');
+
+  if (vipToggle && vipBody && vipArrow) {
+    vipToggle.addEventListener('click', () => {
+      const isOpen = vipBody.style.maxHeight && vipBody.style.maxHeight !== '0px' && vipBody.style.maxHeight !== '0';
+      if (isOpen) {
+        vipBody.style.maxHeight = '0px';
+        vipArrow.style.transform = 'rotate(0deg)';
+        vipArrow.innerText = '▼ 展開';
+      } else {
+        vipBody.style.maxHeight = vipBody.scrollHeight + 'px';
+        vipArrow.style.transform = 'rotate(180deg)';
+        vipArrow.innerText = '▲ 收合';
       }
     });
   }
 });
+
 
 // 8. Cookie 同意條款互動邏輯
 const consentEl = document.getElementById('cookie-consent');
