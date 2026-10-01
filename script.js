@@ -16,25 +16,23 @@ const db = getFirestore(app);
 // 全域變數：存放從 Firebase 抓下來的商品
 let allProducts = [];
 
-// 💡 媽媽指定的專屬訂購連結
+// 💡 指定的專屬訂購連結
 const MOM_ORDER_URL = "http://www.freeshops.co/cs/94gev4b5"; 
 
-// 1. 🌟 升級版開場動畫與滾動偵測動畫初始化
+// 1. 開場動畫與主選單初始化
 window.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById("splash-screen");
   if (splash) {
-    // 停留 1.2 秒讓客人看清楚精緻 Logo，然後像布幕一樣優雅往上收起
     setTimeout(() => { 
       splash.classList.add('fade-out'); 
     }, 1200);
     setTimeout(() => { 
       splash.remove(); 
-      initScrollAnimations(); // 開場結束後啟動滾動淡入特效
     }, 2000);
-  } else {
-    initScrollAnimations();
   }
   
+  // 確保一開始若通過好友驗證，選單能正常顯示
+  initScrollAnimations();
   checkBusinessStatus();
 });
 
