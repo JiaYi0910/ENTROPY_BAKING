@@ -3,67 +3,164 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>隱私權政策</title>
+  <title>隱私權政策 | 熵與焙 ENTROPY & BAKING</title>
+  <!-- 引入一致的高質感 Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-color: #fdfbf7;
+      --card-bg: #ffffff;
+      --text-main: #4a3b32;
+      --text-muted: #8c7a6b;
+      --accent-color: #b08968;
+      --border-color: #e6dfd5;
+      --font-serif: 'Noto Serif TC', serif;
+      --font-sans: 'Plus Jakarta Sans', sans-serif;
+    }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: var(--font-sans), sans-serif;
       max-width: 800px;
-      margin: 40px auto;
-      padding: 0 15px;
-      background-color: #f9f9f9;
-      color: #333;
-      line-height: 1.6;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
     }
-    h1, h2 {
-      color: #2f4f4f;
+
+    .privacy-container {
+      background: var(--card-bg);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(74, 59, 50, 0.04);
+      border: 1px solid var(--border-color);
     }
+
+    h1 {
+      font-family: var(--font-serif);
+      color: var(--text-main);
+      font-size: 28px;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+    }
+
+    h2 {
+      font-family: var(--font-serif);
+      color: var(--text-main);
+      font-size: 18px;
+      margin-top: 30px;
+      margin-bottom: 10px;
+    }
+
+    p, li {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+
+    ul {
+      margin-bottom: 20px;
+      padding-left: 20px;
+    }
+
     a {
-      color: #2f4f4f;
+      color: var(--accent-color);
       text-decoration: none;
+      font-weight: 500;
     }
+
     a:hover {
       text-decoration: underline;
+    }
+
+    .back-home-wrap {
+      margin-top: 40px;
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+      padding-top: 30px;
+    }
+
+    .btn-back {
+      display: inline-block;
+      background-color: var(--text-main);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      transition: background-color 0.2s;
+    }
+
+    .btn-back:hover {
+      background-color: var(--accent-color);
+      text-decoration: none;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: var(--text-muted);
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
-  <h1>隱私權政策</h1>
 
-  <p>歡迎您使用本網站（以下簡稱「本網站」），我們非常重視您的個人資料保護，請您詳閱以下隱私權政策，了解我們如何蒐集、使用及保護您的資料。</p>
+  <div class="privacy-container">
+    <h1>隱私權政策</h1>
 
-  <h2>一、資料蒐集範圍</h2>
-  <p>當您使用本網站時，我們可能會蒐集以下資料：</p>
-  <ul>
-    <li>您的基本聯絡資訊（如姓名、電話、電子郵件）</li>
-    <li>您的訂購資訊與購物車資料</li>
-    <li>您的IP位址及使用設備資訊（用於網站優化與安全）</li>
-  </ul>
+    <p>歡迎您使用 <strong>熵與焙 ENTROPY & BAKING</strong> 網站（以下簡稱「本網站」）。我們非常重視您的個人資料保護，為了讓您安心使用本服務，請您詳細閱讀以下隱私權政策，以了解我們如何蒐集、使用及保護您的資料。</p>
 
-  <h2>二、資料使用目的</h2>
-  <p>我們會將您的資料用於：</p>
-  <ul>
-    <li>處理您的訂單與服務需求</li>
-    <li>提供客戶服務與諮詢回應</li>
-    <li>改善網站功能與使用體驗</li>
-    <li>依法律要求或主管機關指示提供必要資料</li>
-  </ul>
+    <h2>一、資料蒐集範圍</h2>
+    <p>當您瀏覽或使用本網站與相關服務時，我們可能會蒐集以下個人資料：</p>
+    <ul>
+      <li>您的基本聯絡資訊（如透過 LINE 或表單提供的姓名、電話、電子郵件）</li>
+      <li>您的訂購與諮詢偏好紀錄</li>
+      <li>您的 IP 位址、瀏覽裝置與 Cookie 使用數據（用於優化瀏覽體驗與網站安全）</li>
+    </ul>
 
-  <h2>三、資料保護措施</h2>
-  <p>本網站採取合理的安全技術與管理措施，防止您的資料遭未授權存取、竄改或破壞。</p>
+    <h2>二、資料使用目的</h2>
+    <p>我們將所蒐集的資料用於以下用途：</p>
+    <ul>
+      <li>處理您的咖啡豆與甜點諮詢、訂單需求與客服回應</li>
+      <li>提供會員服務、儲值方案管理與專屬優惠通知</li>
+      <li>改善本網站功能與提升使用者瀏覽體驗</li>
+      <li>依相關法律法規要求提供必要之協助</li>
+    </ul>
 
-  <h2>四、第三方分享</h2>
-  <p>除非法律規定或獲得您的同意，本網站不會將您的個人資料提供給第三方。</p>
+    <h2>三、資料保護措施</h2>
+    <p>本網站採取合理的安全技術與管理規範，妥善保護您的個人資料，防止遭受未授權之存取、竄改、揭露或毀損。</p>
 
-  <h2>五、Cookie使用</h2>
-  <p>本網站會使用Cookie來提升您的瀏覽體驗，您可透過瀏覽器設定選擇拒絕Cookie，但可能會影響部分功能的正常使用。</p>
+    <h2>四、第三方外部連結與分享</h2>
+    <p>本網站可能包含通往外部服務（例如 LINE 官方帳號、指定訂購連結、Google 地圖等）的連結。當您點擊離開本網站時，該外部網站之隱私權政策將適用其規範，本網站不負擔相關連帶責任。除法律規定或取得您的同意例外，我們不會將您的個資任意提供給無關之第三方。</p>
 
-  <h2>六、您的權利</h2>
-  <p>您有權利查詢、更正、刪除您的個人資料，請透過本網站聯絡方式與我們聯繫。</p>
+    <h2>五、Cookie 之使用</h2>
+    <p>本網站會使用 Cookie 技術來提升您的瀏覽與購物體驗。您可隨時透過瀏覽器設定拒絕 Cookie 的寫入，但可能會導致網站部分功能無法正常運作。</p>
 
-  <h2>七、聯絡我們</h2>
-  <p>如對隱私權政策有任何疑問，請透過以下方式聯繫我們：<br/>
-    電子郵件：<a href="mailto:shelly45556@gmail.com">shelly45556@gmail.com</a><br/>
-    電話：0900-365-959
-  </p>
+    <h2>六、您的個人權利</h2>
+    <p>您隨時有權利透過我們的聯絡管道查詢、更正或請求刪除您的個人資料。</p>
+
+    <h2>七、聯絡我們</h2>
+    <p>如對本隱私權政策有任何疑問，歡迎隨時與我們聯繫：<br/>
+      店鋪地址：新竹縣湖口鄉光復東路73號<br/>
+      連絡電話：0900-365-959<br/>
+      電子郵件：<a href="mailto:shelly45556@gmail.com">shelly45556@gmail.com</a>
+    </p>
+
+    <div class="back-home-wrap">
+      <a href="index.html" class="btn-back">返回熵與焙首頁 ☕</a>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 熵與焙 ENTROPY & BAKING 版權所有</p>
+  </footer>
+
 </body>
 </html>
