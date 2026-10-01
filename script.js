@@ -19,23 +19,49 @@ let allProducts = [];
 // 💡 指定的專屬訂購連結
 const MOM_ORDER_URL = "http://www.freeshops.co/cs/94gev4b5"; 
 
-// 1. 開場動畫與驗證狀態初始化
+// 1. 開場動畫結束後，才根據驗證狀態決定是否顯示加好友視窗
 window.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById("splash-screen");
-  if (splash) {
-    setTimeout(() => { splash.classList.add('fade-out'); }, 1200);
-    setTimeout(() => { splash.remove(); }, 2000);
-  }
+  const friendCheck = document.getElementById('line-friend-check');
+  const menuWrapper = document.getElementById('menu-wrapper');
 
-  // 檢查是否已經通過 LINE 好友驗證
-  if (getCookie('lineVerified') === 'true') {
-    const friendCheck = document.getElementById('line-friend-check');
-    const menuWrapper = document.getElementById('menu-wrapper');
-    if (friendCheck) friendCheck.style.display = 'none';
-    if (menuWrapper) menuWrapper.style.display = 'block';
+  // 確保一開始加好友視窗跟主選單先隱藏，讓開場動畫獨奏
+  if (friendCheck) friendCheck.style.display = 'none';
+  if (menuWrapper) menuWrapper.style.display = 'none';
+
+  if (splash) {
+    // 停留 1.2 秒讓客人看清楚 Logo
+    setTimeout(() => { 
+      splash.classList.add('fade-out'); 
+    }, 1200);
+
+    // 2 秒後完全移除開場動畫
+    setTimeout(() => { 
+      splash.remove(); 
+
+      // 檢查是否已經通過 LINE 好友驗證
+      if (getCookie('lineVerified') === 'true') {
+        // 如果驗證過了，直接顯示主選單與商品
+        if (menuWrapper) menuWrapper.style.display = 'block';
+        initScrollAnimations();
+      } else {
+        // 沒驗證過：開場動畫跑完後，才彈出加好友視窗！
+        if (friendCheck) {
+          friendCheck.style.display = 'flex';
+          friendCheck.classList.add('is-visible');
+        }
+      }
+    }, 2000);
+  } else {
+    // 如果沒有開場動畫的備用邏輯
+    if (getCookie('lineVerified') === 'true') {
+      if (menuWrapper) menuWrapper.style.display = 'block';
+      initScrollAnimations();
+    } else {
+      if (friendCheck) friendCheck.style.display = 'flex';
+    }
   }
   
-  initScrollAnimations();
   checkBusinessStatus();
 });
 
@@ -61,15 +87,18 @@ function initScrollAnimations() {
   });
 }
 
-// 2. LINE 好友驗證確認按鈕（點擊後記住狀態並解鎖主選單）
+// 2. LINE 好友驗證確認按鈕（點擊後關閉彈窗，主選單與商品瞬間展開）
 const confirmBtn = document.getElementById('btn-confirm-friend');
 if (confirmBtn) {
   confirmBtn.addEventListener('click', () => {
     setCookie('lineVerified', 'true', 30); // 記住驗證狀態 30 天
     const friendCheck = document.getElementById('line-friend-check');
     const menuWrapper = document.getElementById('menu-wrapper');
+    
     if (friendCheck) friendCheck.style.display = 'none';
-    if (menuWrapper) menuWrapper.style.display = 'block';
+    if (menuWrapper) {
+      menuWrapper.style.display = 'block';
+    }
     initScrollAnimations();
   });
 }
