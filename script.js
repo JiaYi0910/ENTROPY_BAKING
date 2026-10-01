@@ -36,7 +36,7 @@ document.getElementById('btn-confirm-friend').addEventListener('click', () => {
   document.getElementById('menu-wrapper').style.display = 'block';
 });
 
-// 3. 自動檢測營業狀態 (09:00 - 20:00，例假日公休)
+// 3. 自動檢測營業狀態 (10:00 - 20:00，例假日公休)
 function checkBusinessStatus() {
   const badge = document.getElementById('business-status-badge');
   if (!badge) return;
@@ -46,14 +46,14 @@ function checkBusinessStatus() {
   const hour = now.getHours();
 
   const isHoliday = (day === 0 || day === 6);
-  const isOpenTime = (hour >= 9 && hour < 20);
+  const isOpenTime = (hour >= 10 && hour < 20);
 
   if (!isHoliday && isOpenTime) {
     badge.className = "status-badge-open";
     badge.innerText = "● 營業中 ☕ 歡迎光臨";
   } else {
     badge.className = "status-badge-closed";
-    badge.innerText = "● 目前休息中 🌙 (營業時間 09:00 - 20:00)";
+    badge.innerText = "● 目前休息中 🌙 (營業時間 10:00 - 20:00)";
   }
 }
 
