@@ -427,7 +427,7 @@ body {
 }
 
 /* ==========================================
-   7. 商品清單與咖啡風味雷達視覺條
+   7. 商品清單與座標軸極簡滑軌樣式
    ========================================== */
 .main-content {
     max-width: 1000px;
@@ -508,14 +508,12 @@ body {
     font-weight: 500;
 }
 
-/* ==========================================
-   ☕ 風味特性極簡圓點評分樣式
-   ========================================== */
+/* ☕ 座標軸極簡滑軌樣式 (Linear Spectrum Bar) */
 .flavor-radar-wrap {
     background: #fcf9f5;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 12px 16px;
+    padding: 14px 16px;
     margin-bottom: 20px;
 }
 
@@ -523,7 +521,7 @@ body {
     font-size: 12px;
     font-weight: 600;
     color: var(--text-main);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
 }
@@ -531,7 +529,7 @@ body {
 .radar-bars {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
 }
 
 .radar-row {
@@ -543,23 +541,44 @@ body {
 }
 
 .radar-label {
+    width: 36px;
     font-weight: 500;
     color: var(--text-main);
 }
 
-.rating-dots {
-    letter-spacing: 4px; /* 保持漂亮的呼吸間距 */
-    font-size: 14px;
+/* 極簡滑軌軌道 */
+.spectrum-track {
+    flex-grow: 1;
+    height: 2px;
+    background: #e6dfd5;
+    position: relative;
+    margin: 0 12px;
+    border-radius: 1px;
 }
 
-.rating-dots .dot {
-    color: #dfd3c3; /* 未點亮的空心圓顏色 */
+/* 滑軌兩端刻度 */
+.spectrum-track::before,
+.spectrum-track::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    width: 2px;
+    height: 6px;
+    background: #dfd3c3;
 }
+.spectrum-track::before { left: 0; }
+.spectrum-track::after { right: 0; }
 
-.rating-dots .dot.active {
-    color: var(--accent-color); /* 點亮的實心圓套用品牌主色 */
+/* 精準標示位置的細垂直線指標 (Thumb) */
+.spectrum-thumb {
+    position: absolute;
+    top: -5px;
+    width: 4px;
+    height: 12px;
+    background-color: var(--accent-color);
+    border-radius: 2px;
+    transform: translateX(-50%);
 }
-
 
 .flavor-tag-container {
     display: flex;
