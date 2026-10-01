@@ -41,10 +41,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
       // 檢查是否已經通過 LINE 好友驗證
       if (getCookie('lineVerified') === 'true') {
-        // 如果驗證過了，直接顯示主選單與商品
         if (menuWrapper) menuWrapper.style.display = 'block';
       } else {
-        // 沒驗證過：開場動畫跑完後，才彈出加好友視窗！
         if (friendCheck) {
           friendCheck.style.display = 'flex';
           friendCheck.classList.add('is-visible');
@@ -52,7 +50,6 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }, 2000);
   } else {
-    // 如果沒有開場動畫的備用邏輯
     if (getCookie('lineVerified') === 'true') {
       if (menuWrapper) menuWrapper.style.display = 'block';
     } else {
@@ -63,11 +60,11 @@ window.addEventListener('DOMContentLoaded', () => {
   checkBusinessStatus();
 });
 
-// 2. LINE 好友驗證確認按鈕（點擊後關閉彈窗，主選單與商品瞬間展開）
+// 2. LINE 好友驗證確認按鈕
 const confirmBtn = document.getElementById('btn-confirm-friend');
 if (confirmBtn) {
   confirmBtn.addEventListener('click', () => {
-    setCookie('lineVerified', 'true', 30); // 記住驗證狀態 30 天
+    setCookie('lineVerified', 'true', 30); 
     const friendCheck = document.getElementById('line-friend-check');
     const menuWrapper = document.getElementById('menu-wrapper');
     
@@ -149,7 +146,23 @@ function filterProducts() {
   renderProducts(filtered);
 }
 
-// 6. 渲染商品卡片（內含雷達條動態延遲展開）
+// 💡 輔助函式：將分數（0-100）轉為 5 個極簡小圓點
+function renderRatingDots(score) {
+  const totalDots = 5;
+  const activeCount = Math.round((score / 100) * totalDots);
+  
+  let dotsHTML = '';
+  for (let i = 1; i <= totalDots; i++) {
+    if (i <= activeCount) {
+      dotsHTML += '<span class="dot active">●</span>';
+    } else {
+      dotsHTML += '<span class="dot">◯</span>';
+    }
+  }
+  return dotsHTML;
+}
+
+// 6. 渲染商品卡片（改用極簡小圓點呈現）
 function renderProducts(products) {
   if (!coffeeContainer) return;
   coffeeContainer.innerHTML = '';
@@ -162,7 +175,7 @@ function renderProducts(products) {
 
       let flavorBadgesHTML = '';
       if (product.flavor_notes && product.flavor_notes !== '無') {
-        const notes = product.flavor_notes.split(/[,[,，、\s]+/);
+        const notes = product.flavor_notes.split(/[,，、\s]+/);
         notes.forEach(note => {
           if (note.trim()) {
             flavorBadgesHTML += `<span class="flavor-badge"># ${note.trim()}</span>`;
@@ -198,15 +211,15 @@ function renderProducts(products) {
             <div class="radar-bars">
               <div class="radar-row">
                 <span class="radar-label">酸度</span>
-                <div class="radar-track"><div class="radar-fill" data-width="${acidLevel}"></div></div>
+                <div class="rating-dots">${renderRatingDots(acidLevel)}</div>
               </div>
               <div class="radar-row">
                 <span class="radar-label">甜感</span>
-                <div class="radar-track"><div class="radar-fill" data-width="${sweetLevel}"></div></div>
+                <div class="rating-dots">${renderRatingDots(sweetLevel)}</div>
               </div>
               <div class="radar-row">
                 <span class="radar-label">醇厚</span>
-                <div class="radar-track"><div class="radar-fill" data-width="${bodyLevel}"></div></div>
+                <div class="rating-dots">${renderRatingDots(bodyLevel)}</div>
               </div>
             </div>
           </div>
@@ -221,14 +234,6 @@ function renderProducts(products) {
       `;
       coffeeContainer.appendChild(card);
     });
-
-    // 🌟 卡片生成後，讓雷達條以極短延遲優雅滑動長出
-    setTimeout(() => {
-      document.querySelectorAll('.radar-fill').forEach(fill => {
-        const targetWidth = fill.getAttribute('data-width');
-        fill.style.width = targetWidth + '%';
-      });
-    }, 100);
   }
 }
 
