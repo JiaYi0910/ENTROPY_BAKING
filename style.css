@@ -508,12 +508,14 @@ body {
     font-weight: 500;
 }
 
-/* ☕ 咖啡風味雷達視覺條樣式 */
+/* ==========================================
+   ☕ 風味特性極簡圓點評分樣式
+   ========================================== */
 .flavor-radar-wrap {
     background: #fcf9f5;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 12px;
+    padding: 12px 16px;
     margin-bottom: 20px;
 }
 
@@ -535,30 +537,27 @@ body {
 .radar-row {
     display: flex;
     align-items: center;
-    font-size: 11px;
+    justify-content: space-between;
+    font-size: 12px;
     color: var(--text-muted);
 }
 
 .radar-label {
-    width: 36px;
     font-weight: 500;
+    color: var(--text-main);
 }
 
-.radar-track {
-    flex-grow: 1;
-    height: 6px;
-    background: #e6dfd5;
-    border-radius: 3px;
-    overflow: hidden;
-    margin: 0 8px;
+.rating-dots {
+    letter-spacing: 4px; /* 保持漂亮的呼吸間距 */
+    font-size: 14px;
 }
 
-.radar-fill {
-    height: 100%;
-    background: var(--accent-color);
-    border-radius: 3px;
-    width: 0%; /* 預設從 0 開始，等 JS 賦予寬度時自動滑動展開 */
-    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); /* 高級感的緩動滑動效果 */
+.rating-dots .dot {
+    color: #dfd3c3; /* 未點亮的空心圓顏色 */
+}
+
+.rating-dots .dot.active {
+    color: var(--accent-color); /* 點亮的實心圓套用品牌主色 */
 }
 
 
