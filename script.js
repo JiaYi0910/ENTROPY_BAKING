@@ -19,7 +19,7 @@ let allProducts = [];
 // 💡 媽媽指定的專屬訂購連結 (請在此處填入實際網址)
 const MOM_ORDER_URL = "http://www.freeshops.co/cs/94gev4b5"; 
 
-// 1. 開場動畫計時器
+// 1. 開場動畫計時器與營業狀態
 window.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById("splash-screen");
   if (splash) {
@@ -27,7 +27,6 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => { splash.remove(); }, 5000);
   }
   
-  // 自動偵測營業時間狀態
   checkBusinessStatus();
 });
 
@@ -43,10 +42,9 @@ function checkBusinessStatus() {
   if (!badge) return;
 
   const now = new Date();
-  const day = now.getDay(); // 0 是週日, 6 是週六
+  const day = now.getDay();
   const hour = now.getHours();
 
-  // 假設例假日公休為週六、週日 (可根據實際調整)
   const isHoliday = (day === 0 || day === 6);
   const isOpenTime = (hour >= 9 && hour < 20);
 
@@ -108,7 +106,7 @@ function filterProducts() {
   renderProducts(filtered);
 }
 
-// 6. 渲染商品卡片 (包含風味標籤與指定訂購連結)
+// 6. 渲染商品卡片 (內含風味雷達視覺條與標籤)
 function renderProducts(products) {
   coffeeContainer.innerHTML = '';
   if (products.length === 0) {
@@ -118,10 +116,10 @@ function renderProducts(products) {
       const card = document.createElement('div');
       card.className = 'product-card';
 
-      // 將風味敘述轉換成精緻的風味標籤
+      // 風味標籤處理
       let flavorBadgesHTML = '';
       if (product.flavor_notes && product.flavor_notes !== '無') {
-        const notes = product.flavor_notes.split(/[,，、\s]+/); // 支援逗號或空格分隔
+        const notes = product.flavor_notes.split(/[,，、\s]+/);
         notes.forEach(note => {
           if (note.trim()) {
             flavorBadgesHTML += `<span class="flavor-badge"># ${note.trim()}</span>`;
@@ -131,15 +129,47 @@ function renderProducts(products) {
         flavorBadgesHTML = `<span class="flavor-badge"># 精選風味</span>`;
       }
 
+      // 動態模擬風味雷達比例（根據烘焙度與風味文字自動賦予視覺長條感）
+      let acidLevel = 70;
+      let sweetLevel = 80;
+      let bodyLevel = 75;
+      
+      const roast = product.roast_level || '';
+      if (roast.includes('淺')) { acidLevel = 85; sweetLevel = 75; bodyLevel = 55; }
+      else if (roast.includes('深')) { acidLevel = 35; sweetLevel = 85; bodyLevel = 90; }
+
       card.innerHTML = `
         <div>
           <div class="product-title">${product.name}</div>
           <div class="product-price">NT$${product.price}</div>
           <div class="product-details-wrap">
-            <div class="product-info"><b>烘焙度：</b>${product.roast_level || '無'}</div>
+            <div class="product-info"><b>烘焙度：</b>${roast || '無'}</div>
             <div class="product-info"><b>產地：</b>${product.origin || '無'}</div>
             <div class="product-info"><b>處理方式：</b>${product.process_method || '無'}</div>
+            <div class="product-info"><b>風味描述：</b>${product.flavor_notes || '無'}</div>
           </div>
+
+          <!-- ☕ 咖啡風味雷達視覺條 -->
+          <div class="flavor-radar-wrap">
+            <div class="flavor-radar-title">
+              <span>☕ 風味特性指引</span>
+            </div>
+            <div class="radar-bars">
+              <div class="radar-row">
+                <span class="radar-label">酸度</span>
+                <div class="radar-track"><div class="radar-fill" style="width: ${acidLevel}%;"></div></div>
+              </div>
+              <div class="radar-row">
+                <span class="radar-label">甜感</span>
+                <div class="radar-track"><div class="radar-fill" style="width: ${sweetLevel}%;"></div></div>
+              </div>
+              <div class="radar-row">
+                <span class="radar-label">醇厚</span>
+                <div class="radar-track"><div class="radar-fill" style="width: ${bodyLevel}%;"></div></div>
+              </div>
+            </div>
+          </div>
+
           <div class="flavor-tag-container">
             ${flavorBadgesHTML}
           </div>
@@ -174,25 +204,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// 8. Cookie 同意條款邏輯
+// 8. Cookie 同意條款互動邏輯 (串接 privacy.html)
 const consentEl = document.getElementById('cookie-consent');
 const acceptBtn = document.getElementById('accept-cookie-btn');
+
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
   return null;
 }
+
 function setCookie(name, value, days) {
   const d = new Date();
   d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
   document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
 }
+
 if (getCookie('cookieConsent') === 'true') {
   if (consentEl) consentEl.style.display = 'none';
 } else {
   if (consentEl) consentEl.style.display = 'flex';
 }
+
 if (acceptBtn) {
   acceptBtn.addEventListener('click', () => {
     setCookie('cookieConsent', 'true', 365);
