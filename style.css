@@ -8,14 +8,14 @@
 }
 
 :root {
-    --bg-color: #fdfbf7;         /* 溫暖燕麥米色背景 */
-    --card-bg: #ffffff;          /* 卡片純白 */
-    --text-main: #4a3b32;        /* 沉穩咖啡豆棕 */
-    --text-muted: #8c7a6b;       /* 柔和灰褐色 */
-    --accent-color: #b08968;     /* 焦糖質感金棕 */
-    --accent-hover: #9c7553;     /* 焦糖深色 */
-    --border-color: #e6dfd5;     /* 柔和邊框色 */
-    --line-green: #06c755;       /* LINE 官方綠 */
+    --bg-color: #fdfbf7;
+    --card-bg: #ffffff;
+    --text-main: #4a3b32;
+    --text-muted: #8c7a6b;
+    --accent-color: #b08968;
+    --accent-hover: #9c7553;
+    --border-color: #e6dfd5;
+    --line-green: #06c755;
     --font-serif: 'Noto Serif TC', serif;
     --font-sans: 'Plus Jakarta Sans', sans-serif;
 }
@@ -29,7 +29,7 @@ body {
 }
 
 /* ==========================================
-   1. 加入好友提醒區 (LINE Check Overlay)
+   1. 加入好友提醒區
    ========================================== */
 #line-friend-check {
     position: fixed;
@@ -118,7 +118,7 @@ body {
 }
 
 /* ==========================================
-   2. 開場動畫 (Splash Screen)
+   2. 開場動畫 (Logo 恢復原始比例，不裁切成圓形)
    ========================================== */
 #splash-screen {
     position: fixed;
@@ -133,15 +133,16 @@ body {
     z-index: 9998;
 }
 
-.splash-content { text-align: center; }
+.splash-content { text-align: center; padding: 20px; }
 
-.splash-content img {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+.splash-logo {
+    max-width: 220px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 24px;
+    border-radius: 0; /* 確保不是圓形 */
+    box-shadow: 0 10px 30px rgba(74, 59, 50, 0.08);
 }
 
 .splash-content h1 {
@@ -235,7 +236,7 @@ body {
 }
 
 /* ==========================================
-   5. 獨立卡片區塊 (公告與儲值方案 - 絕不黏在一起)
+   5. 獨立卡片區塊 (公告與儲值方案)
    ========================================== */
 .content-section {
     max-width: 800px;
@@ -258,7 +259,6 @@ body {
     color: var(--text-main);
 }
 
-/* 公告區塊細節 */
 .card-box-header {
     padding: 18px 24px;
     background-color: #f7f3ec;
@@ -290,7 +290,6 @@ body {
 
 .notice-inner strong { color: var(--text-main); }
 
-/* 儲值方案區塊細節 */
 .vip-box {
     padding: 24px;
     background: linear-gradient(135deg, #ffffff 0%, #fdfaf6 100%);
@@ -412,7 +411,7 @@ body {
 .search-area select:focus { border-color: var(--accent-color); }
 
 /* ==========================================
-   7. 商品清單與卡片設計 (含風味標籤與指定下單鈕)
+   7. 商品清單與咖啡風味雷達視覺條
    ========================================== */
 .main-content {
     max-width: 1000px;
@@ -493,7 +492,57 @@ body {
     font-weight: 500;
 }
 
-/* 風味雷達／標籤樣式 */
+/* ☕ 咖啡風味雷達視覺條樣式 */
+.flavor-radar-wrap {
+    background: #fcf9f5;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+}
+
+.flavor-radar-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.radar-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.radar-row {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.radar-label {
+    width: 36px;
+    font-weight: 500;
+}
+
+.radar-track {
+    flex-grow: 1;
+    height: 6px;
+    background: #e6dfd5;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0 8px;
+}
+
+.radar-fill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 3px;
+}
+
 .flavor-tag-container {
     display: flex;
     flex-wrap: wrap;
@@ -525,9 +574,7 @@ body {
     transition: background-color 0.2s;
 }
 
-.btn-order-link:hover {
-    background-color: var(--accent-color);
-}
+.btn-order-link:hover { background-color: var(--accent-color); }
 
 /* ==========================================
    8. 互動式交通與地圖區塊
@@ -537,9 +584,7 @@ body {
     background: var(--card-bg);
 }
 
-.location-content {
-    margin-top: 12px;
-}
+.location-content { margin-top: 12px; }
 
 .info-item {
     font-size: 14px;
@@ -549,9 +594,7 @@ body {
 
 .info-item strong { color: var(--text-main); }
 
-.map-btn-wrap {
-    margin-top: 16px;
-}
+.map-btn-wrap { margin-top: 16px; }
 
 .btn-map {
     display: inline-block;
@@ -573,7 +616,7 @@ body {
 }
 
 /* ==========================================
-   9. Cookie 條款與 Footer
+   9. Cookie 同意條款與 Footer
    ========================================== */
 .cookie-consent-banner {
     position: fixed;
