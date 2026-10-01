@@ -57,14 +57,16 @@
 			</div>
 		</header>
 
-		<!-- 獨立區塊一：本店公告 (預設展開) -->
+				<!-- 獨立區塊一：本店公告 -->
 		<section class="content-section fade-in-section">
 			<div class="card-box notice-box">
 				<div class="card-box-header" id="notice-toggle">
 					<div class="box-title">📢 本店公告</div>
-					<span id="notice-arrow">▲ 收合</span>
+					<div class="toggle-action-wrap">
+						<span id="notice-text">收合</span>
+						<span id="notice-arrow">▲</span>
+					</div>
 				</div>
-				<!-- 加上 style="max-height: 500px;" 讓它預設直接展開 -->
 				<div class="card-box-body notice-open" id="notice-body" style="max-height: 500px;">
 					<div class="notice-inner">
 						<p><strong>🛒 下單與客製說明</strong><br>
@@ -81,12 +83,15 @@
 			</div>
 		</section>
 
-		<!-- 獨立區塊二：超值儲值方案 (同步改成可收合的精緻卡片) -->
+		<!-- 獨立區塊二：超值儲值方案 -->
 		<section class="content-section fade-in-section">
 			<div class="card-box vip-box">
 				<div class="card-box-header" id="vip-toggle">
-					<div class="box-title">💎 VIP 專屬儲值方案 <span class="vip-subtitle" style="font-weight: normal; margin-left: 8px;">(點擊可收合)</span></div>
-					<span id="vip-arrow">▲ 收合</span>
+					<div class="box-title">💎 VIP 專屬儲值方案</div>
+					<div class="toggle-action-wrap">
+						<span id="vip-text">收合</span>
+						<span id="vip-arrow">▲</span>
+					</div>
 				</div>
 				<div class="card-box-body notice-open" id="vip-body" style="max-height: 500px;">
 					<div class="notice-inner" style="border-top: 1px solid var(--border-color);">
