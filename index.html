@@ -57,14 +57,15 @@
 			</div>
 		</header>
 
-		<!-- 獨立區塊一：本店公告 -->
+		<!-- 獨立區塊一：本店公告 (預設展開) -->
 		<section class="content-section fade-in-section">
 			<div class="card-box notice-box">
 				<div class="card-box-header" id="notice-toggle">
 					<div class="box-title">📢 本店公告</div>
-					<span id="notice-arrow">▼ 展開</span>
+					<span id="notice-arrow">▲ 收合</span>
 				</div>
-				<div class="card-box-body" id="notice-body">
+				<!-- 加上 style="max-height: 500px;" 讓它預設直接展開 -->
+				<div class="card-box-body notice-open" id="notice-body" style="max-height: 500px;">
 					<div class="notice-inner">
 						<p><strong>🛒 下單與客製說明</strong><br>
 							本網站提供精選豆單與風味瀏覽，<strong>請透過指定連結進行下單</strong>。
@@ -80,27 +81,31 @@
 			</div>
 		</section>
 
-		<!-- 獨立區塊二：超值儲值方案 -->
+		<!-- 獨立區塊二：超值儲值方案 (同步改成可收合的精緻卡片) -->
 		<section class="content-section fade-in-section">
 			<div class="card-box vip-box">
-				<div class="vip-box-header">
-                   <div class="box-title">💎 VIP 專屬儲值方案</div>
-                   <span class="vip-subtitle">超划算回饋，豆子與甜點皆可折抵</span>
-                </div>
-				<div class="vip-grid">
-					<div class="vip-card">
-						<div class="vip-amount">儲值 NT$ 5,000</div>
-						<div class="vip-bonus">加贈 <span>NT$ 500</span></div>
-						<div class="vip-desc">總共獲得 $5,500 額度</div>
-					</div>
-					<div class="vip-card featured">
-						<div class="vip-badge-top">最推薦</div>
-						<div class="vip-amount">儲值 NT$ 10,000</div>
-						<div class="vip-bonus">加贈 <span>NT$ 1,000</span></div>
-						<div class="vip-desc">總共獲得 $11,000 額度</div>
+				<div class="card-box-header" id="vip-toggle">
+					<div class="box-title">💎 VIP 專屬儲值方案 <span class="vip-subtitle" style="font-weight: normal; margin-left: 8px;">(點擊可收合)</span></div>
+					<span id="vip-arrow">▲ 收合</span>
+				</div>
+				<div class="card-box-body notice-open" id="vip-body" style="max-height: 500px;">
+					<div class="notice-inner" style="border-top: 1px solid var(--border-color);">
+						<div class="vip-grid" style="margin-bottom: 16px;">
+							<div class="vip-card">
+								<div class="vip-amount">儲值 NT$ 5,000</div>
+								<div class="vip-bonus">加贈 <span>NT$ 500</span></div>
+								<div class="vip-desc">總共獲得 $5,500 額度</div>
+							</div>
+							<div class="vip-card featured">
+								<div class="vip-badge-top">最推薦</div>
+								<div class="vip-amount">儲值 NT$ 10,000</div>
+								<div class="vip-bonus">加贈 <span>NT$ 1,000</span></div>
+								<div class="vip-desc">總共獲得 $11,000 額度</div>
+							</div>
+						</div>
+						<p class="vip-note">※ 儲值金額須使用完畢，恕不退費。詳情可洽 LINE 客服。</p>
 					</div>
 				</div>
-				<p class="vip-note">※ 儲值金額須使用完畢，恕不退費。詳情可洽 LINE 客服。</p>
 			</div>
 		</section>
 
