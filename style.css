@@ -29,6 +29,20 @@ body {
 }
 
 /* ==========================================
+   🌟 全新微動畫特效 (Fade In & Slide Up)
+   ========================================== */
+.fade-in-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-in-section.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ==========================================
    1. 加入好友提醒區
    ========================================== */
 #line-friend-check {
@@ -94,10 +108,13 @@ body {
     font-weight: 600;
     font-size: 16px;
     margin-bottom: 12px;
-    transition: opacity 0.2s;
+    transition: all 0.2s ease;
 }
 
-.btn-primary-line:hover { opacity: 0.9; }
+.btn-primary-line:hover { 
+    opacity: 0.9;
+    transform: scale(1.02);
+}
 
 .btn-secondary-check {
     background: transparent;
@@ -118,7 +135,7 @@ body {
 }
 
 /* ==========================================
-   2. 開場動畫 (Logo 恢復原始比例，不裁切成圓形)
+   2. 🌟 沉浸式開場動畫 (Splash Screen)
    ========================================== */
 #splash-screen {
     position: fixed;
@@ -131,18 +148,28 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 9998;
+    transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
 }
 
-.splash-content { text-align: center; padding: 20px; }
+#splash-screen.fade-out {
+    opacity: 0;
+    transform: translateY(-100%); /* 像高級布幕一樣往上滑動收起 */
+    pointer-events: none;
+}
+
+.splash-content { 
+    text-align: center; 
+    padding: 20px; 
+    animation: logoFadeIn 1.2s ease-out forwards;
+}
 
 .splash-logo {
-    max-width: 220px;
+    max-width: 200px;
     width: 100%;
     height: auto;
     object-fit: contain;
     margin-bottom: 24px;
-    border-radius: 0; /* 確保不是圓形 */
-    box-shadow: 0 10px 30px rgba(74, 59, 50, 0.08);
+    border-radius: 0;
 }
 
 .splash-content h1 {
@@ -153,18 +180,21 @@ body {
 }
 
 .splash-content h1 span {
-    font-size: 14px;
+    display: block;
+    font-size: 13px;
     font-family: var(--font-sans);
     color: var(--text-muted);
     letter-spacing: 4px;
+    margin-top: 6px;
 }
 
-@keyframes fadeOut {
-    to { opacity: 0; visibility: hidden; }
+@keyframes logoFadeIn {
+    0% { opacity: 0; transform: scale(0.96) translateY(10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* ==========================================
-   3. 懸浮 LINE 按鈕
+   3. 懸浮 LINE 按鈕 (帶呼吸微動效)
    ========================================== */
 .floating-line-btn {
     position: fixed;
@@ -179,10 +209,13 @@ body {
     font-size: 14px;
     box-shadow: 0 4px 12px rgba(6, 199, 85, 0.3);
     z-index: 100;
-    transition: transform 0.2s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.floating-line-btn:hover { transform: scale(1.05); }
+.floating-line-btn:hover { 
+    transform: scale(1.06); 
+    box-shadow: 0 6px 16px rgba(6, 199, 85, 0.4);
+}
 
 /* ==========================================
    4. Header 區塊與營業狀態燈號
@@ -250,6 +283,11 @@ body {
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(74, 59, 50, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-box:hover {
+    box-shadow: 0 6px 20px rgba(74, 59, 50, 0.06);
 }
 
 .box-title {
@@ -326,10 +364,13 @@ body {
     padding: 20px;
     text-align: center;
     position: relative;
-    transition: transform 0.2s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.vip-card:hover { transform: translateY(-2px); }
+.vip-card:hover { 
+    transform: translateY(-3px); 
+    box-shadow: 0 6px 16px rgba(74, 59, 50, 0.08);
+}
 
 .vip-card.featured {
     background: #f7efe6;
@@ -404,11 +445,14 @@ body {
     color: var(--text-main);
     font-size: 14px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-area input:focus,
-.search-area select:focus { border-color: var(--accent-color); }
+.search-area select:focus { 
+    border-color: var(--accent-color); 
+    box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.1);
+}
 
 /* ==========================================
    7. 商品清單與咖啡風味雷達視覺條
@@ -449,15 +493,15 @@ body {
     border-radius: 12px;
     padding: 24px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 }
 
 .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(74, 59, 50, 0.08);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 28px rgba(74, 59, 50, 0.1);
 }
 
 .product-title {
@@ -571,10 +615,13 @@ body {
     text-decoration: none;
     font-size: 14px;
     font-weight: 600;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
 }
 
-.btn-order-link:hover { background-color: var(--accent-color); }
+.btn-order-link:hover { 
+    background-color: var(--accent-color); 
+    transform: scale(1.02);
+}
 
 /* ==========================================
    8. 互動式交通與地圖區塊
@@ -613,6 +660,7 @@ body {
     background-color: var(--accent-color);
     color: white;
     border-color: var(--accent-color);
+    transform: scale(1.02);
 }
 
 /* ==========================================
@@ -648,10 +696,13 @@ body {
     cursor: pointer;
     font-weight: 600;
     font-size: 13px;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s;
 }
 
-.cookie-btn:hover { opacity: 0.9; }
+.cookie-btn:hover { 
+    opacity: 0.9; 
+    transform: scale(1.05);
+}
 
 footer {
     text-align: center;
