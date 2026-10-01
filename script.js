@@ -19,7 +19,7 @@ let allProducts = [];
 // 💡 指定的專屬訂購連結
 const MOM_ORDER_URL = "http://www.freeshops.co/cs/94gev4b5"; 
 
-// 1. 開場動畫與主選單初始化
+// 1. 開場動畫初始化（保持原本的開場質感）
 window.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById("splash-screen");
   if (splash) {
@@ -31,11 +31,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 2000);
   }
   
-  // 💡 確保開場動畫結束後，直接顯示主選單（如果不需要強制綁定驗證的話）
-  // 或者是讓驗證通過後才隱藏好友檢查卡片
-  document.getElementById('menu-wrapper').style.display = 'block';
-  document.getElementById('line-friend-check').style.display = 'none';
-
   initScrollAnimations();
   checkBusinessStatus();
 });
