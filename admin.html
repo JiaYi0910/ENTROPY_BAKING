@@ -3,93 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>熵與焙 - 後台管理</title>
+    <title>熵與焙 - 後台管理系統</title>
+    <!-- 引入與前台一致的高質感 Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
-        h1, h2 { color: #4a3728; }
-        .form-section, .list-section, #login-section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 4px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { background: #6f4e37; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background: #4a3728; }
-        .product-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 12px 0; }
-        .product-details { flex-grow: 1; }
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-left: 10px; }
+        :root {
+            --bg-color: #fdfbf7;
+            --card-bg: #ffffff;
+            --text-main: #4a3b32;
+            --text-muted: #8c7a6b;
+            --accent-color: #b08968;
+            --accent-hover: #9c7553;
+            --border-color: #e6dfd5;
+            --font-serif: 'Noto Serif TC', serif;
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-sans), sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        h1, h2 {
+            font-family: var(--font-serif);
+            color: var(--text-main);
+        }
+
+        .admin-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .admin-header-bar h1 {
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+
+        .form-section, .list-section, #login-section {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(74, 59, 50, 0.03);
+            border: 1px solid var(--border-color);
+        }
+
+        #login-section {
+            max-width: 450px;
+            margin: 80px auto;
+            text-align: center;
+        }
+
+        #login-section h2 {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-size: 14px;
+            font-family: var(--font-sans);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            background: var(--text-main);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent-color);
+        }
+
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 0;
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-details {
+            flex-grow: 1;
+            padding-right: 15px;
+        }
+
+        .product-details strong {
+            font-family: var(--font-serif);
+            font-size: 16px;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+            display: inline-block;
+        }
         .status-up { background: #e6f4ea; color: #137333; }
         .status-down { background: #fce8e6; color: #c5221f; }
-        .actions button { margin-left: 5px; font-size: 14px; padding: 6px 10px; }
-        .btn-toggle { background: #1a73e8; }
-        .btn-delete { background: #d93025; }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .actions button {
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+
+        .btn-edit { background: #d97706; }
+        .btn-edit:hover { background: #b45309; }
+
+        .btn-toggle { background: #2563eb; }
+        .btn-toggle:hover { background: #1d4ed8; }
+
+        .btn-delete { background: #dc2626; }
+        .btn-delete:hover { background: #b91c1c; }
+
         #admin-content { display: none; } /* 預設隱藏管理內容，登入後才顯示 */
-        #btn-logout { background: #555; float: right; }
+        
+        #btn-logout {
+            background: #78716c;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        #btn-logout:hover {
+            background: #57534e;
+        }
+
+        .form-title-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .form-title-area h2 {
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
 
+    <!-- 登入區塊 -->
     <section id="login-section">
-        <h2>🔒 管理員登入</h2>
+        <h2>🔒 熵與焙後台登入</h2>
         <form id="login-form">
             <div class="form-group">
-                <label>帳號 (Email)：</label>
-                <input type="email" id="login-email" required>
+                <label>管理員帳號 (Email)：</label>
+                <input type="email" id="login-email" required placeholder="請輸入管理員信箱">
             </div>
             <div class="form-group">
                 <label>密碼：</label>
-                <input type="password" id="login-password" required>
+                <input type="password" id="login-password" required placeholder="請輸入密碼">
             </div>
-            <button type="submit">登入後台</button>
+            <button type="submit" style="width: 100%; margin-top: 10px;">安全登入後台</button>
         </form>
     </section>
 
+    <!-- 後台主內容區 -->
     <div id="admin-content">
-        <button id="btn-logout">登出系統</button>
-        <h1>☕ 熵與焙 後台管理</h1>
+        <div class="admin-header-bar">
+            <h1>☕ 熵與焙 後台管理</h1>
+            <button id="btn-logout">登出系統</button>
+        </div>
 
+        <!-- 上架／編輯商品表單 -->
         <section class="form-section">
-            <h2 id="form-title">✨ 上架新咖啡豆</h2>
+            <div class="form-title-area">
+                <h2 id="form-title">✨ 上架新咖啡豆</h2>
+            </div>
             <form id="product-form">
                 <input type="hidden" id="p-id">
 
                 <div class="form-group">
                     <label>商品名稱：</label>
-                    <input type="text" id="p-name" required>
+                    <input type="text" id="p-name" required placeholder="例如：衣索比亞 耶加雪菲">
                 </div>
                 <div class="form-group">
                     <label>價格 (NT$)：</label>
-                    <input type="number" id="p-price" required>
+                    <input type="number" id="p-price" required placeholder="例如：500">
                 </div>
                 <div class="form-group">
                     <label>烘焙度：</label>
                     <select id="p-roast">
                         <option value="無">-</option>
-                        <option value="淺焙">淺烘焙</option>
-        				<option value="中焙">中烘焙</option>
-        				<option value="中淺焙">中深烘焙</option>
-        				<option value="中深焙">深烘焙</option>
-        				<option value="深焙">極深烘焙</option>
+                        <option value="淺焙">淺焙</option>
+        				<option value="中焙">中焙</option>
+        				<option value="中淺焙">中淺焙</option>
+        				<option value="中深焙">中深焙</option>
+        				<option value="深焙">深焙</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>產地：</label>
-                    <input type="text" id="p-origin" required>
+                    <input type="text" id="p-origin" required placeholder="例如：衣索比亞">
                 </div>
                 <div class="form-group">
                     <label>處理方式：</label>
-                    <input type="text" id="p-process">
+                    <input type="text" id="p-process" placeholder="例如：水洗 / 日曬 / 厭氧發酵">
                 </div>
                 <div class="form-group">
                     <label>風味敘述：</label>
-                    <textarea id="p-flavor" rows="2"></textarea>
+                    <textarea id="p-flavor" rows="2" placeholder="例如：柑橘、茉莉花香、伯爵茶感 (前台會自動轉為風味標籤)"></textarea>
                 </div>
-                <button type="submit" id="btn-submit">確認新增並上架</button>
-                <button type="button" id="btn-cancel-edit" style="background: #999; display: none; margin-left: 10px;">取消編輯</button>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" id="btn-submit" style="flex: 2;">確認新增並上架</button>
+                    <button type="button" id="btn-cancel-edit" style="background: #a8a29e; flex: 1; display: none;">取消編輯</button>
+                </div>
             </form>
         </section>
 
+        <!-- 商品清單管理 -->
         <section class="list-section">
             <h2>📋 目前全部商品清單</h2>
-            <div id="admin-product-list"></div>
+            <div id="admin-product-list" style="margin-top: 15px;"></div>
         </section>
     </div>
 
@@ -98,7 +274,7 @@
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // === 填入你的 Firebase Config ===
+        // === Firebase Config (維持不變) ===
         const firebaseConfig = {
             apiKey: "AIzaSyBJ7FSvcaZjwWmWAjAmt9grWhzPYCwaTNQ",
             authDomain: "gengenhao-coffee.firebaseapp.com",
@@ -139,7 +315,7 @@
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
             signInWithEmailAndPassword(auth, email, password)
-                .catch(err => alert('登入失敗，請檢查帳密：' + err.message));
+                .catch(err => alert('登入失敗，請檢查帳號密碼：' + err.message));
         });
 
         // 3. 登出邏輯
@@ -195,6 +371,11 @@
         const adminListContainer = document.getElementById('admin-product-list');
         onSnapshot(productsRef, (querySnapshot) => {
             adminListContainer.innerHTML = '';
+            if (querySnapshot.empty) {
+                adminListContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px 0;">目前尚無商品資料</p>';
+                return;
+            }
+
             querySnapshot.forEach((docSnap) => {
                 const item = docSnap.data();
                 const id = docSnap.id;
@@ -204,12 +385,12 @@
                 
                 div.innerHTML = `
                     <div class="product-details">
-                        <strong>${item.name}</strong> (NT$${item.price})
+                        <strong>${item.name}</strong> <span style="color:var(--accent-color); font-weight:600;">(NT$${item.price})</span>
                         <span class="status-badge ${isUp ? 'status-up' : 'status-down'}">${item.status}</span>
-                        <br><small>產地: ${item.origin} | 烘焙: ${item.roast_level} | 處理: ${item.process_method} | 風味: ${item.flavor_notes}</small>
+                        <br><small style="color:var(--text-muted);">產地: ${item.origin} | 烘焙: ${item.roast_level} | 處理: ${item.process_method} | 風味: ${item.flavor_notes}</small>
                     </div>
                     <div class="actions">
-                        <button class="btn-edit" style="background: #e0a800;" 
+                        <button class="btn-edit" 
                             data-id="${id}"
                             data-name="${item.name}"
                             data-price="${item.price}"
@@ -229,7 +410,6 @@
                 btn.addEventListener('click', (e) => {
                     const t = e.target;
                     
-                    // 將舊資料填回表單
                     pIdInput.value = t.getAttribute('data-id');
                     document.getElementById('p-name').value = t.getAttribute('data-name');
                     document.getElementById('p-price').value = t.getAttribute('data-price');
@@ -242,12 +422,10 @@
                     const flavor = t.getAttribute('data-flavor');
                     document.getElementById('p-flavor').value = flavor === '無' ? '' : flavor;
 
-                    // 切換 UI 狀態
                     formTitle.innerText = '✏️ 正在修改：' + t.getAttribute('data-name');
                     btnSubmit.innerText = '💾 儲存修改';
                     btnCancelEdit.style.display = 'inline-block';
 
-                    // 捲動至最上方方便操作
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
             });
@@ -261,7 +439,7 @@
                 });
             });
 
-            // 綁定【❌ 刪除】按鈕事件 (已修正原代碼 id 遺失問題)
+            // 綁定【❌ 刪除】按鈕事件
             document.querySelectorAll('.btn-delete').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.target.getAttribute('data-id');
