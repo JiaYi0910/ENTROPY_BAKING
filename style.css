@@ -557,7 +557,10 @@ body {
     height: 100%;
     background: var(--accent-color);
     border-radius: 3px;
+    width: 0%; /* 預設從 0 開始，等 JS 賦予寬度時自動滑動展開 */
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); /* 高級感的緩動滑動效果 */
 }
+
 
 .flavor-tag-container {
     display: flex;
