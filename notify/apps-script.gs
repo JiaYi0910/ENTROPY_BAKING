@@ -11,7 +11,7 @@
 // 收到新訂單要通知的信箱；要通知多人時用逗號隔開，例如 ['a@gmail.com', 'b@gmail.com']
 const ADMIN_EMAILS = ['shelly45556@gmail.com'];
 
-const SHOP_NAME = '熵與焙';
+const SHOP_NAME = '熵與焙 ENTROPY & BAKING';
 const SITE_URL = 'https://jiayi0910.github.io/ENTROPY_BAKING/';
 const ADMIN_URL = SITE_URL + 'admin.html';
 const STORE_ADDRESS = '新竹縣湖口鄉光復東路73號（10:00-20:00，例假日公休）';
