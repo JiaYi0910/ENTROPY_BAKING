@@ -47,7 +47,7 @@
 
 ## 新訂單 Email 通知
 
-照 [`notify/README.md`](notify/README.md) 設定一次（約 10 分鐘），之後有新訂單或儲值申請，兩位管理員都會收到 Email，並自動備份到 Google 試算表。
+照 [`notify/README.md`](notify/README.md) 設定一次（約 10 分鐘），之後有新訂單或儲值申請，會寄 Email 到 **shelly45556@gmail.com**，並自動備份到 Google 試算表。
 
 ## 免費額度
 

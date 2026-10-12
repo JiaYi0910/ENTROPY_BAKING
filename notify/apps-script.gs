@@ -5,8 +5,8 @@
  * 網站有新訂單或儲值申請時會送到這裡 → 寄 Email 給管理員，並備份到這份 Google 試算表
  */
 
-// ⚠ 換成兩位管理員要收通知的信箱（只在 Google Apps Script 裡修改，不要改進 GitHub 的檔案）
-const ADMIN_EMAILS = ['請換成第一位管理員信箱', '請換成第二位管理員信箱'];
+// 收到新訂單要通知的信箱；要通知多人時用逗號隔開，例如 ['a@gmail.com', 'b@gmail.com']
+const ADMIN_EMAILS = ['shelly45556@gmail.com'];
 
 const SHOP_NAME = '熵與焙';
 const ADMIN_URL = 'https://jiayi0910.github.io/ENTROPY_BAKING/admin.html';

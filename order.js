@@ -289,14 +289,9 @@ function addToCart() {
 
 function openCart() {
   $('site-toast')?.classList.remove('is-visible');
-  // 剛送出訂單、購物車還是空的：再打開仍顯示完成頁，方便客人再看一次轉帳帳號；
-  // 已經放了新商品：回到購物車
-  if (lastOrder && cart.length === 0) {
-    showStep('done');
-  } else {
-    lastOrder = null;
-    showStep('cart');
-  }
+  // 每次打開都從購物車開始；訂單完成頁只在剛送出訂單時顯示
+  lastOrder = null;
+  showStep('cart');
   renderCart();
   if (!$('cart-dialog').open) $('cart-dialog').showModal();
   $('cart-title').focus();
