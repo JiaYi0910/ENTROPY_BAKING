@@ -261,6 +261,41 @@
         }
         #btn-logout:hover { background: #57534e; }
 
+        /* 前往前台的連結 */
+        .btn-outline-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .btn-outline-link:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-hover);
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 18px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: var(--text-main);
+            text-decoration: underline;
+        }
+
         /* ===== 清單工具列 ===== */
         .list-toolbar {
             display: flex;
@@ -426,6 +461,7 @@
             <p id="login-error" class="form-error" role="alert" hidden></p>
             <button type="submit" id="btn-login" class="btn-block">安全登入後台</button>
         </form>
+        <a href="index.html" class="back-link">← 返回前台豆單</a>
     </section>
 
     <!-- 後台主內容區 (登入後才顯示) -->
@@ -434,6 +470,8 @@
             <h1>☕ 熵與焙 後台管理</h1>
             <div class="header-user">
                 <span id="current-user"></span>
+                <!-- 另開分頁看前台，改完商品可以馬上確認客人看到的樣子 -->
+                <a href="index.html" target="_blank" rel="noopener" class="btn-outline-link">查看前台 ↗</a>
                 <button id="btn-logout" type="button">登出系統</button>
             </div>
         </div>

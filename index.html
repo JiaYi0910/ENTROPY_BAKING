@@ -5,6 +5,8 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>熵與焙 ENTROPY & BAKING | 精選咖啡豆</title>
+	<meta name="description" content="熵與焙 ENTROPY & BAKING｜新竹湖口自家烘焙精品咖啡豆，線上瀏覽本季豆單、烘焙度與風味。">
+	<meta name="theme-color" content="#fdfbf7">
 	<link rel="stylesheet" href="style.css">
 	<!-- 引入 Google Fonts 提升精品質感 -->
 	<link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,152 +33,189 @@
 		</div>
 	</section>
 
-	<!-- 🌟 升級版沉浸式開場動畫 -->
+	<!-- 🌟 沉浸式開場動畫 -->
 	<div id="splash-screen">
 		<div class="splash-content">
-			<img src="IMG_7938.jpeg" alt="品牌圖片" class="splash-logo">
-			<h1>熵與焙<br><span>ENTROPY & BAKING</span></h1>
+			<img src="IMG_7938.jpeg" alt="熵與焙品牌圖片" class="splash-logo">
+			<div class="splash-title">熵與焙<span>ENTROPY & BAKING</span></div>
 		</div>
 	</div>
 
 	<!-- 主選單外層 (預設隱藏，驗證後顯示) -->
 	<div id="menu-wrapper" style="display:none;">
-		
-		<!-- 懸浮 LINE 諮詢按鈕 -->
-		<a href="https://line.me/R/ti/p/@245rbror" target="_blank" rel="noopener noreferrer" class="floating-line-btn" title="加入LINE好友">
-			💬 LINE 諮詢
-		</a>
 
-		<!-- 頂部 Header 與營業狀態 -->
-		<header class="site-header">
-			<div class="header-inner">
-				<div id="business-status-badge" class="status-badge-closed">檢測營業中...</div>
-				<h1>熵與焙</h1>
-				<h2>ENTROPY & BAKING</h2>
-				<p class="header-subtitle">嚴選精品咖啡豆 · 手作烘焙</p>
+		<!-- 頂部導覽列（捲動時固定在上方），品牌名稱中英文並列 -->
+		<nav class="top-nav" aria-label="主選單">
+			<div class="top-nav-inner">
+				<a href="#top" class="nav-brand">熵與焙<span>ENTROPY & BAKING</span></a>
+				<div class="nav-links">
+					<a href="#notice">公告</a>
+					<a href="#vip">儲值方案</a>
+					<a href="#menu">豆單</a>
+					<a href="#store">門市資訊</a>
+				</div>
+			</div>
+		</nav>
+
+		<!-- 品牌主視覺 -->
+		<header class="hero" id="top">
+			<div class="hero-inner">
+				<div class="hero-text">
+					<div id="business-status-badge" class="status-badge-closed">檢測營業中...</div>
+					<!-- 品牌名稱已顯示在導覽列，這裡只給搜尋引擎與螢幕閱讀器讀，畫面上不重複顯示 -->
+					<h1 class="hero-slogan"><span class="visually-hidden">熵與焙 ENTROPY & BAKING｜</span>從一顆咖啡豆開始，<br>烘焙每一刻美好</h1>
+					<p class="hero-subtitle">嚴選精品咖啡豆 · 手作烘焙</p>
+					<div class="hero-actions">
+						<a href="#menu" class="btn btn-primary">瀏覽本季豆單</a>
+						<a href="https://line.me/R/ti/p/@245rbror" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">LINE 諮詢</a>
+					</div>
+					<p class="hero-meta">📍 新竹縣湖口鄉　·　🕙 10:00 - 20:00（例假日公休）</p>
+				</div>
+				<div class="hero-visual">
+					<img src="brand-logo.jpg" alt="熵與焙品牌標誌：探索平衡・烘焙美好" width="960" height="758">
+				</div>
 			</div>
 		</header>
 
-		<!-- 獨立區塊一：本店公告 (預設展開，無動畫) -->
-		<section class="content-section">
-			<div class="card-box notice-box">
-				<div class="card-box-header" id="notice-toggle">
-					<div class="box-title">📢 本店公告</div>
-					<div class="toggle-action-wrap">
-						<span id="notice-text">收合</span>
-						<span id="notice-arrow">▲</span>
-					</div>
-				</div>
-				<div class="card-box-body" id="notice-body" style="max-height: 800px;">
-					<div class="notice-inner">
-						<p><strong>🛒 下單與客製說明</strong><br>
-							本網站提供精選豆單與風味瀏覽，<strong>請透過指定連結進行下單</strong>。
-						</p>
-						<p><strong>☕ 咖啡包裝與耗材</strong><br>
-							咖啡以 <strong>1 磅</strong> 為單位販售，約可製作 <strong>40 包濾掛或浸萃包</strong>，耗材費 <strong>200 元/磅</strong>。
-						</p>
-						<p><strong>⚠ 價格調整提醒</strong><br>
-							本店咖啡價格將依照市場行情與生豆成本<strong>不定期調整</strong>，下單前請以最新公告為主。
-						</p>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<!-- 獨立區塊二：超值儲值方案 (預設展開，無動畫) -->
-		<section class="content-section">
-			<div class="card-box vip-box">
-				<div class="card-box-header" id="vip-toggle">
-					<div class="box-title">💎 VIP 專屬儲值方案</div>
-					<div class="toggle-action-wrap">
-						<span id="vip-text">收合</span>
-						<span id="vip-arrow">▲</span>
-					</div>
-				</div>
-				<div class="card-box-body" id="vip-body" style="max-height: 800px;">
-					<div class="notice-inner" style="border-top: 1px solid var(--border-color);">
-						<div class="vip-grid" style="margin-bottom: 16px;">
-							<div class="vip-card">
-								<div class="vip-amount">儲值 NT$ 5,000</div>
-								<div class="vip-bonus">加贈 <span>NT$ 500</span></div>
-								<div class="vip-desc">總共獲得 $5,500 額度</div>
+		<main>
+			<!-- 獨立區塊一：本店公告 (預設展開) -->
+			<section class="content-section section-tight" id="notice">
+				<div class="card-box is-open">
+					<button type="button" class="card-box-header" id="notice-toggle" aria-expanded="true" aria-controls="notice-body">
+						<span class="box-title-wrap">
+							<span class="box-icon" aria-hidden="true">📢</span>
+							<span>
+								<span class="box-title">本店公告</span>
+								<span class="box-subtitle">下單前請先閱讀</span>
+							</span>
+						</span>
+						<span class="toggle-action-wrap">
+							<span class="toggle-text">收合</span>
+							<span class="chevron" aria-hidden="true"></span>
+						</span>
+					</button>
+					<div class="card-box-body" id="notice-body" style="max-height: 800px;">
+						<div class="notice-grid">
+							<div class="notice-item">
+								<div class="notice-icon" aria-hidden="true">🛒</div>
+								<h3>下單與客製說明</h3>
+								<p>本網站提供精選豆單與風味瀏覽，<strong>請透過指定連結進行下單</strong>。</p>
 							</div>
-							<div class="vip-card featured">
-								<div class="vip-badge-top">最推薦</div>
-								<div class="vip-amount">儲值 NT$ 10,000</div>
-								<div class="vip-bonus">加贈 <span>NT$ 1,000</span></div>
-								<div class="vip-desc">總共獲得 $11,000 額度</div>
+							<div class="notice-item">
+								<div class="notice-icon" aria-hidden="true">☕</div>
+								<h3>咖啡包裝與耗材</h3>
+								<p>咖啡以 <strong>1 磅</strong> 為單位販售，約可製作 <strong>40 包濾掛或浸萃包</strong>，耗材費 <strong>200 元/磅</strong>。</p>
+							</div>
+							<div class="notice-item">
+								<div class="notice-icon" aria-hidden="true">⚠️</div>
+								<h3>價格調整提醒</h3>
+								<p>本店咖啡價格將依照市場行情與生豆成本<strong>不定期調整</strong>，下單前請以最新公告為主。</p>
 							</div>
 						</div>
-						<p class="vip-note">※ 儲值金額須使用完畢，恕不退費。詳情可洽 LINE 客服。</p>
 					</div>
 				</div>
-			</div>
-		</section>
+			</section>
 
-		<!-- 搜尋與篩選列 -->
-		<section class="filter-section">
-			<div class="search-area">
-				<input type="text" id="searchInput" placeholder="🔍 搜尋名稱、風味、處理方式...">
-				<select id="filterRoast">
-					<option value="">全部烘焙度</option>
-					<option value="淺焙">淺焙</option>
-					<option value="中焙">中焙</option>
-					<option value="中淺焙">中淺焙</option>
-					<option value="中深焙">中深焙</option>
-					<option value="深焙">深焙</option>
-				</select>
-				<select id="filterOrigin">
-					<option value="">全部產地</option>
-					<option value="印尼">印尼</option>
-					<option value="哥倫比亞">哥倫比亞</option>
-					<option value="巴拿馬">巴拿馬</option>
-					<option value="墨西哥">墨西哥</option>
-					<option value="瓜地馬拉">瓜地馬拉</option>
-					<option value="盧安達">盧安達</option>
-					<option value="臺灣">臺灣</option>
-					<option value="衣索比亞">衣索比亞</option>
-				</select>
-			</div>
-		</section>
-
-		<!-- 商品清單 (維持原樣直接顯示) -->
-		<main class="main-content">
-			<section class="product-list">
-				<div class="section-title-wrap">
-					<h2>CURRENT MENU</h2>
-					<p>精選單品咖啡豆系列</p>
+			<!-- 獨立區塊二：VIP 儲值方案 (預設展開) -->
+			<section class="content-section" id="vip">
+				<div class="card-box is-open">
+					<button type="button" class="card-box-header" id="vip-toggle" aria-expanded="true" aria-controls="vip-body">
+						<span class="box-title-wrap">
+							<span class="box-icon" aria-hidden="true">💎</span>
+							<span>
+								<span class="box-title">VIP 專屬儲值方案</span>
+								<span class="box-subtitle">儲值越多、加贈越多</span>
+							</span>
+						</span>
+						<span class="toggle-action-wrap">
+							<span class="toggle-text">收合</span>
+							<span class="chevron" aria-hidden="true"></span>
+						</span>
+					</button>
+					<div class="card-box-body" id="vip-body" style="max-height: 800px;">
+						<div class="vip-content">
+							<div class="vip-grid">
+								<div class="vip-card">
+									<div class="vip-amount">儲值 NT$ 5,000</div>
+									<div class="vip-bonus">加贈 <span>NT$ 500</span></div>
+									<div class="vip-desc">總共獲得 $5,500 額度</div>
+								</div>
+								<div class="vip-card featured">
+									<div class="vip-badge-top">最推薦</div>
+									<div class="vip-amount">儲值 NT$ 10,000</div>
+									<div class="vip-bonus">加贈 <span>NT$ 1,000</span></div>
+									<div class="vip-desc">總共獲得 $11,000 額度</div>
+								</div>
+							</div>
+							<p class="vip-note">※ 儲值金額須使用完畢，恕不退費。詳情可洽 LINE 客服。</p>
+						</div>
+					</div>
 				</div>
+			</section>
+
+			<!-- 豆單：搜尋、篩選與商品卡 -->
+			<section class="content-section" id="menu">
+				<div class="section-heading">
+					<p class="section-eyebrow">CURRENT MENU</p>
+					<h2>本季精選豆單</h2>
+					<p class="section-desc">精選單品咖啡豆系列 · 皆以 1 磅為單位販售</p>
+				</div>
+
+				<div class="filter-bar">
+					<div class="search-field">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+						<input type="search" id="searchInput" placeholder="搜尋名稱、風味、處理方式…" aria-label="搜尋咖啡豆">
+					</div>
+					<select id="filterOrigin" aria-label="依產地篩選">
+						<option value="">全部產地</option>
+					</select>
+				</div>
+				<!-- 烘焙度篩選按鈕由 JS 產生 -->
+				<div class="roast-chips" id="roastChips" role="group" aria-label="依烘焙度篩選"></div>
+				<p class="result-count" id="resultCount" aria-live="polite"></p>
+
 				<div class="product-grid" id="coffee-container">
 					<!-- 咖啡豆商品卡由 JS 動態插入 -->
 				</div>
 			</section>
-		</main>
 
-		<!-- 互動式交通與店鋪資訊區塊 -->
-		<section class="content-section">
-			<div class="card-box location-box">
-				<div class="box-title">📍 店鋪資訊與交通導引</div>
-				<div class="location-content">
-					<div class="info-item">
-						<strong>地址：</strong>新竹縣湖口鄉光復東路73號
+			<!-- 店鋪資訊與交通導引 -->
+			<section class="content-section" id="store">
+				<div class="section-heading">
+					<p class="section-eyebrow">VISIT US</p>
+					<h2>店鋪資訊與交通導引</h2>
+				</div>
+				<div class="store-card">
+					<div class="store-info">
+						<dl class="info-list">
+							<div>
+								<dt>地址</dt>
+								<dd>新竹縣湖口鄉光復東路73號</dd>
+							</div>
+							<div>
+								<dt>電話</dt>
+								<dd><a href="tel:0900365959">0900-365-959</a></dd>
+							</div>
+							<div>
+								<dt>營業時間</dt>
+								<dd>10:00 - 20:00（例假日公休）</dd>
+							</div>
+						</dl>
+						<div class="store-actions">
+							<a href="https://maps.google.com/?q=新竹縣湖口鄉光復東路73號" target="_blank" rel="noopener noreferrer" class="btn btn-primary">🗺 Google 導航</a>
+							<a href="tel:0900365959" class="btn btn-ghost">📞 撥打電話</a>
+						</div>
 					</div>
-					<div class="info-item">
-						<strong>電話：</strong>0900-365-959
-					</div>
-					<div class="info-item">
-						<strong>營業時間：</strong>10:00 - 20:00 (例假日公休)
-					</div>
-					<div class="map-btn-wrap">
-						<a href="https://maps.google.com/?q=新竹縣湖口鄉光復東路73號" target="_blank" rel="noopener noreferrer" class="btn-map">
-							🗺 一鍵開啟 Google 導航
-						</a>
+					<div class="store-line">
+						<img src="line-qr.jpg" alt="熵與焙 LINE 官方帳號 QR Code" width="540" height="540" loading="lazy">
+						<p>加入 LINE 好友<span>豆況、價格、儲值方案都可以詢問</span></p>
+						<a href="https://line.me/R/ti/p/@245rbror" target="_blank" rel="noopener noreferrer" class="btn btn-line">加入 LINE 好友</a>
 					</div>
 				</div>
-			</div>
-		</section>
+			</section>
+		</main>
 
-		<!-- 🍪 Cookie 同意橫幅 -->
+		<!-- 🍪 Cookie 同意提示 -->
 		<div id="cookie-consent" class="cookie-consent-banner" style="display:none;">
 			<div class="cookie-message">
 				本網站使用 Cookie 以提升瀏覽體驗。繼續使用即表示您同意我們的
@@ -186,11 +225,16 @@
 		</div>
 
 		<!-- 頁尾 -->
-		<footer>
-			<div class="footer-content">
-				<p>熵與焙 ENTROPY & BAKING 版權所有</p>
-				<p class="footer-privacy">本網站使用 Cookie，詳情請見 <a href="privacy.html">隱私權政策</a></p>
-			</div>
+		<footer class="site-footer">
+			<div class="footer-brand">熵與焙<span>ENTROPY & BAKING</span></div>
+			<nav class="footer-links" aria-label="頁尾連結">
+				<a href="#menu">豆單</a>
+				<a href="#store">門市資訊</a>
+				<a href="https://line.me/R/ti/p/@245rbror" target="_blank" rel="noopener noreferrer">LINE 官方帳號</a>
+				<a href="privacy.html">隱私權政策</a>
+				<a href="admin.html">管理員登入</a>
+			</nav>
+			<p class="footer-copy">© 熵與焙 ENTROPY & BAKING 版權所有 · 本網站使用 Cookie，詳情請見隱私權政策</p>
 		</footer>
 	</div>
 

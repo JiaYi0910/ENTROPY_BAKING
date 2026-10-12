@@ -1,15 +1,34 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js";
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
 // 全域變數：存放從 Firebase 抓下來的商品
 let allProducts = [];
+let productsLoaded = false;
 
 // 💡 指定的專屬訂購連結
-const MOM_ORDER_URL = "http://www.freeshops.co/cs/94gev4b5"; 
+const MOM_ORDER_URL = "http://www.freeshops.co/cs/94gev4b5";
+
+// 烘焙度由淺到深；color 用在刻度點與篩選按鈕的小圓點
+const ROAST_LEVELS = [
+  { value: '淺焙', short: '淺', color: '#d4b48c' },
+  { value: '中淺焙', short: '中淺', color: '#b88a5e' },
+  { value: '中焙', short: '中', color: '#9a6a42' },
+  { value: '中深焙', short: '中深', color: '#74492b' },
+  { value: '深焙', short: '深', color: '#4a2f1d' }
+];
+
+// 產地篩選的基本選項；商品產地包含這些字就算符合（例如配豆也能篩到）
+const BASE_ORIGINS = ['衣索比亞', '哥倫比亞', '瓜地馬拉', '巴拿馬', '墨西哥', '盧安達', '印尼', '臺灣'];
+
+// 商品資料放進 innerHTML 前先跳脫，避免特殊符號弄壞畫面
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+// 「無」、「-」或空白都視為沒填
+function hasValue(value) {
+  const text = String(value ?? '').trim();
+  return text !== '' && text !== '無' && text !== '-';
+}
 
 // 1. 開場動畫結束後，才根據驗證狀態決定是否顯示加好友視窗
 window.addEventListener('DOMContentLoaded', () => {
@@ -23,252 +42,276 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (splash) {
     // 停留 1.2 秒讓客人看清楚 Logo
-    setTimeout(() => { 
-      splash.classList.add('fade-out'); 
+    setTimeout(() => {
+      splash.classList.add('fade-out');
     }, 1200);
 
     // 2 秒後完全移除開場動畫
-    setTimeout(() => { 
-      splash.remove(); 
+    setTimeout(() => {
+      splash.remove();
 
       // 檢查是否已經通過 LINE 好友驗證
       if (getCookie('lineVerified') === 'true') {
         if (menuWrapper) menuWrapper.style.display = 'block';
       } else {
-        if (friendCheck) {
-          friendCheck.style.display = 'flex';
-          friendCheck.classList.add('is-visible');
-        }
+        if (friendCheck) friendCheck.style.display = 'flex';
       }
     }, 2000);
   } else {
     if (getCookie('lineVerified') === 'true') {
       if (menuWrapper) menuWrapper.style.display = 'block';
     } else {
-      if (friendCheck) {
-        friendCheck.style.display = 'flex';
-      }
+      if (friendCheck) friendCheck.style.display = 'flex';
     }
   }
-  
+
   checkBusinessStatus();
+  // 每分鐘更新一次，頁面開著跨過營業時間也會自動切換
+  setInterval(checkBusinessStatus, 60 * 1000);
 });
 
 // 2. LINE 好友驗證確認按鈕
 const confirmBtn = document.getElementById('btn-confirm-friend');
 if (confirmBtn) {
   confirmBtn.addEventListener('click', () => {
-    setCookie('lineVerified', 'true', 30); 
+    setCookie('lineVerified', 'true', 30);
     const friendCheck = document.getElementById('line-friend-check');
     const menuWrapper = document.getElementById('menu-wrapper');
-    
+
     if (friendCheck) friendCheck.style.display = 'none';
-    if (menuWrapper) {
-      menuWrapper.style.display = 'block';
-    }
+    if (menuWrapper) menuWrapper.style.display = 'block';
   });
 }
 
 // 3. 自動檢測營業狀態 (10:00 - 20:00，例假日公休)
+// 一律以台灣時間判斷，人在國外的客人看到的狀態也正確
+function getTaiwanTime() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Taipei', weekday: 'short', hour: 'numeric', hour12: false
+  }).formatToParts(new Date());
+  const weekday = parts.find(p => p.type === 'weekday').value;
+  const hour = Number(parts.find(p => p.type === 'hour').value) % 24;
+  return { isWeekend: weekday === 'Sat' || weekday === 'Sun', hour };
+}
+
 function checkBusinessStatus() {
   const badge = document.getElementById('business-status-badge');
   if (!badge) return;
 
-  const now = new Date();
-  const day = now.getDay();
-  const hour = now.getHours();
+  const { isWeekend, hour } = getTaiwanTime();
+  const isOpenTime = hour >= 10 && hour < 20;
 
-  const isHoliday = (day === 0 || day === 6);
-  const isOpenTime = (hour >= 10 && hour < 20);
-
-  if (!isHoliday && isOpenTime) {
+  if (!isWeekend && isOpenTime) {
     badge.className = "status-badge-open";
     badge.innerText = "● 營業中 ☕ 歡迎光臨";
   } else {
     badge.className = "status-badge-closed";
-    badge.innerText = "● 目前休息中 🌙 (營業時間 10:00 - 20:00)";
+    badge.innerText = "● 目前休息中 🌙 營業時間 10:00 - 20:00";
   }
 }
 
 // 4. Firebase 即時監聽上架商品
-const q = query(collection(db, "products"), where("status", "==", "上架"));
+// 用動態載入：就算客人的網路連不到 Firebase，只有豆單顯示失敗，按鈕、開場動畫等功能照常運作
+async function loadProducts() {
+  try {
+    const [{ initializeApp }, { getFirestore, collection, query, where, onSnapshot }, { firebaseConfig }] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"),
+      import("./firebase-config.js")
+    ]);
+    const db = getFirestore(initializeApp(firebaseConfig));
+    const q = query(collection(db, "products"), where("status", "==", "上架"));
 
-onSnapshot(q, (querySnapshot) => {
-  allProducts = [];
-  querySnapshot.forEach((doc) => {
-    allProducts.push({ id: doc.id, ...doc.data() });
-  });
-  // 依後台設定的「前台排序」由小到大排列；沒設定的視為 0，同數字時維持原本順序
-  allProducts.sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
-  filterProducts();
-});
+    onSnapshot(q, (querySnapshot) => {
+      allProducts = [];
+      querySnapshot.forEach((doc) => {
+        allProducts.push({ id: doc.id, ...doc.data() });
+      });
+      // 依後台設定的「前台排序」由小到大排列；沒設定的視為 0，同數字時維持原本順序
+      allProducts.sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+      productsLoaded = true;
+      renderOriginOptions();
+      renderRoastChips();
+      filterProducts();
+    }, showLoadError);
+  } catch (error) {
+    showLoadError(error);
+  }
+}
 
-// 5. 搜尋與篩選事件綁定
+function showLoadError(error) {
+  console.error('豆單載入失敗', error);
+  if (coffeeContainer) {
+    coffeeContainer.innerHTML = '<p class="grid-message">豆單暫時載入失敗，請稍後重新整理，或透過 LINE 詢問我們 🙏</p>';
+  }
+}
+
+// 5. 搜尋與篩選
 const coffeeContainer = document.getElementById('coffee-container');
 const searchInput = document.getElementById('searchInput');
-const filterRoast = document.getElementById('filterRoast');
 const filterOrigin = document.getElementById('filterOrigin');
+const roastChips = document.getElementById('roastChips');
+const resultCount = document.getElementById('resultCount');
+let selectedRoast = '';
 
+if (coffeeContainer) {
+  coffeeContainer.innerHTML = '<p class="grid-message">豆單載入中…</p>';
+}
 if (searchInput) searchInput.addEventListener('input', filterProducts);
-if (filterRoast) filterRoast.addEventListener('change', filterProducts);
 if (filterOrigin) filterOrigin.addEventListener('change', filterProducts);
 
+loadProducts();
+
+// 產地選單依目前上架的商品自動產生，新產地不用改程式也篩得到
+function renderOriginOptions() {
+  if (!filterOrigin) return;
+  const current = filterOrigin.value;
+  const origins = BASE_ORIGINS.filter(o => allProducts.some(p => (p.origin || '').includes(o)));
+
+  // 不屬於基本選項的產地（例如「韓式配方」）直接用原本的文字當選項
+  allProducts.forEach(p => {
+    const origin = (p.origin || '').trim();
+    if (origin && !BASE_ORIGINS.some(o => origin.includes(o)) && !origins.includes(origin)) {
+      origins.push(origin);
+    }
+  });
+
+  filterOrigin.innerHTML = '<option value="">全部產地</option>' +
+    origins.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+  filterOrigin.value = origins.includes(current) ? current : '';
+}
+
+// 烘焙度篩選按鈕；目前沒有豆子的烘焙度會變灰無法點選
+function renderRoastChips() {
+  if (!roastChips) return;
+  const available = new Set(allProducts.map(p => p.roast_level));
+  if (selectedRoast && !available.has(selectedRoast)) selectedRoast = '';
+
+  const chips = [`<button type="button" class="chip${selectedRoast === '' ? ' is-active' : ''}" data-roast="" aria-pressed="${selectedRoast === ''}">全部烘焙度</button>`]
+    .concat(ROAST_LEVELS.map(level => {
+      const active = selectedRoast === level.value;
+      return `<button type="button" class="chip${active ? ' is-active' : ''}" data-roast="${level.value}" aria-pressed="${active}"${available.has(level.value) ? '' : ' disabled'}>
+        <span class="chip-dot" style="background:${level.color}"></span>${level.value}
+      </button>`;
+    }));
+  roastChips.innerHTML = chips.join('');
+}
+
+if (roastChips) {
+  roastChips.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip || chip.disabled) return;
+    selectedRoast = chip.dataset.roast;
+    renderRoastChips();
+    filterProducts();
+  });
+}
+
 function filterProducts() {
-  if (!coffeeContainer) return;
+  if (!coffeeContainer || !productsLoaded) return;
   const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
-  const roast = filterRoast ? filterRoast.value : '';
   const origin = filterOrigin ? filterOrigin.value : '';
 
   const filtered = allProducts.filter(p => {
-    const name = p.name || '';
-    const pOrigin = p.origin || '';
-    const roastLevel = p.roast_level || '';
-    const processMethod = p.process_method || '';
-    const flavorNotes = p.flavor_notes || '';
-
-    const matchKeyword =
-      name.toLowerCase().includes(keyword) ||
-      pOrigin.toLowerCase().includes(keyword) ||
-      roastLevel.toLowerCase().includes(keyword) ||
-      processMethod.toLowerCase().includes(keyword) ||
-      flavorNotes.toLowerCase().includes(keyword);
-
-    const matchRoast = roast === '' || roastLevel === roast;
-    const matchOrigin = origin === '' || pOrigin.includes(origin);
-
+    const matchKeyword = [p.name, p.origin, p.roast_level, p.process_method, p.flavor_notes]
+      .some(v => String(v ?? '').toLowerCase().includes(keyword));
+    const matchRoast = selectedRoast === '' || p.roast_level === selectedRoast;
+    const matchOrigin = origin === '' || (p.origin || '').includes(origin);
     return matchKeyword && matchRoast && matchOrigin;
   });
 
+  if (resultCount) {
+    resultCount.textContent = filtered.length === allProducts.length
+      ? `共 ${allProducts.length} 支咖啡豆`
+      : `找到 ${filtered.length} 支咖啡豆（共 ${allProducts.length} 支）`;
+  }
   renderProducts(filtered);
 }
 
-// 💡 輔助函式：將分數（0-100）轉為座標軸滑軌指標
-function renderSpectrumBar(score) {
-  const percent = Math.max(0, Math.min(100, score));
+function resetFilters() {
+  if (searchInput) searchInput.value = '';
+  if (filterOrigin) filterOrigin.value = '';
+  selectedRoast = '';
+  renderRoastChips();
+  filterProducts();
+}
+
+// 6. 渲染商品卡片
+
+// 烘焙度刻度：淺 ─ 中淺 ─ 中 ─ 中深 ─ 深，標出這支豆子的位置
+function renderRoastScale(roastLevel) {
+  if (!ROAST_LEVELS.some(level => level.value === roastLevel)) return '';
+  const steps = ROAST_LEVELS.map(level => `
+    <li class="${level.value === roastLevel ? 'is-active' : ''}" style="--roast:${level.color}">${level.short}</li>
+  `).join('');
   return `
-    <div class="spectrum-track">
-      <div class="spectrum-thumb" style="left: ${percent}%;"></div>
+    <div class="roast-scale" role="img" aria-label="烘焙度：${roastLevel}">
+      <div class="roast-scale-head"><span>烘焙度</span><strong>${roastLevel}</strong></div>
+      <ol class="roast-steps" aria-hidden="true">${steps}</ol>
     </div>
   `;
 }
 
-// 6. 渲染商品卡片（改用極簡滑軌座標軸呈現）
-function renderProducts(products) {
-  if (!coffeeContainer) return;
-  coffeeContainer.innerHTML = '';
-  if (products.length === 0) {
-    coffeeContainer.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 40px 0;">查無符合條件的咖啡豆</p>';
-  } else {
-    products.forEach(product => {
-      const card = document.createElement('div');
-      card.className = 'product-card';
-
-      let flavorBadgesHTML = '';
-      if (product.flavor_notes && product.flavor_notes !== '無') {
-        const notes = product.flavor_notes.split(/[,，、\s]+/);
-        notes.forEach(note => {
-          if (note.trim()) {
-            flavorBadgesHTML += `<span class="flavor-badge"># ${note.trim()}</span>`;
-          }
-        });
-      } else {
-        flavorBadgesHTML = `<span class="flavor-badge"># 精選風味</span>`;
-      }
-
-      let acidLevel = 70;
-      let sweetLevel = 80;
-      let bodyLevel = 75;
-      
-      const roast = product.roast_level || '';
-      if (roast.includes('淺')) { acidLevel = 85; sweetLevel = 75; bodyLevel = 55; }
-      else if (roast.includes('深')) { acidLevel = 35; sweetLevel = 85; bodyLevel = 90; }
-
-      card.innerHTML = `
-        <div>
-          <div class="product-title">${product.name}</div>
-          <div class="product-price">NT$${product.price}</div>
-          <div class="product-details-wrap">
-            <div class="product-info"><b>烘焙度：</b>${roast || '無'}</div>
-            <div class="product-info"><b>產地：</b>${product.origin || '無'}</div>
-            <div class="product-info"><b>處理方式：</b>${product.process_method || '無'}</div>
-            <div class="product-info"><b>風味描述：</b>${product.flavor_notes || '無'}</div>
-          </div>
-
-          <div class="flavor-radar-wrap">
-            <div class="flavor-radar-title">
-              <span>☕ 風味特性指引</span>
-            </div>
-            <div class="radar-bars">
-              <div class="radar-row">
-                <span class="radar-label">酸度</span>
-                ${renderSpectrumBar(acidLevel)}
-              </div>
-              <div class="radar-row">
-                <span class="radar-label">甜感</span>
-                ${renderSpectrumBar(sweetLevel)}
-              </div>
-              <div class="radar-row">
-                <span class="radar-label">醇厚</span>
-                ${renderSpectrumBar(bodyLevel)}
-              </div>
-            </div>
-          </div>
-
-          <div class="flavor-tag-container">
-            ${flavorBadgesHTML}
-          </div>
-        </div>
-        <a href="${MOM_ORDER_URL}" target="_blank" rel="noopener noreferrer" class="btn-order-link">
-          立即前往指定連結下單 ➔
-        </a>
-      `;
-      coffeeContainer.appendChild(card);
-    });
-  }
+function formatPrice(price) {
+  const n = Number(price);
+  return Number.isFinite(n) ? n.toLocaleString('zh-TW') : escapeHtml(price);
 }
 
-// 7. 公告欄與 VIP 儲值方案的收合互動動畫
-document.addEventListener('DOMContentLoaded', () => {
-  const noticeToggle = document.getElementById('notice-toggle');
-  const noticeBody = document.getElementById('notice-body');
-  const noticeText = document.getElementById('notice-text');
-  const noticeArrow = document.getElementById('notice-arrow');
+function renderProducts(products) {
+  if (!coffeeContainer) return;
 
-  if (noticeToggle && noticeBody) {
-    noticeToggle.addEventListener('click', () => {
-      const isOpen = noticeBody.style.maxHeight && noticeBody.style.maxHeight !== '0px' && noticeBody.style.maxHeight !== '0';
-      if (isOpen) {
-        noticeBody.style.maxHeight = '0px';
-        if (noticeText) noticeText.innerText = '展開';
-        if (noticeArrow) noticeArrow.innerText = '▼';
-      } else {
-        noticeBody.style.maxHeight = noticeBody.scrollHeight + 'px';
-        if (noticeText) noticeText.innerText = '收合';
-        if (noticeArrow) noticeArrow.innerText = '▲';
-      }
-    });
+  if (products.length === 0) {
+    coffeeContainer.innerHTML = `
+      <div class="grid-message">
+        <p>查無符合條件的咖啡豆</p>
+        <button type="button" class="btn btn-ghost" id="btn-reset-filters">清除篩選條件</button>
+      </div>`;
+    document.getElementById('btn-reset-filters').addEventListener('click', resetFilters);
+    return;
   }
 
-  const vipToggle = document.getElementById('vip-toggle');
-  const vipBody = document.getElementById('vip-body');
-  const vipText = document.getElementById('vip-text');
-  const vipArrow = document.getElementById('vip-arrow');
+  coffeeContainer.innerHTML = products.map((product, index) => {
+    const originLine = [product.origin, product.process_method].filter(hasValue).map(escapeHtml).join(' · ');
+    const tags = hasValue(product.flavor_notes)
+      ? String(product.flavor_notes).split(/[,，、\s]+/).filter(Boolean)
+        .map(note => `<span class="flavor-badge"># ${escapeHtml(note)}</span>`).join('')
+      : '';
 
-  if (vipToggle && vipBody) {
-    vipToggle.addEventListener('click', () => {
-      const isOpen = vipBody.style.maxHeight && vipBody.style.maxHeight !== '0px' && vipBody.style.maxHeight !== '0';
-      if (isOpen) {
-        vipBody.style.maxHeight = '0px';
-        if (vipText) vipText.innerText = '展開';
-        if (vipArrow) vipArrow.innerText = '▼';
-      } else {
-        vipBody.style.maxHeight = vipBody.scrollHeight + 'px';
-        if (vipText) vipText.innerText = '收合';
-        if (vipArrow) vipArrow.innerText = '▲';
-      }
-    });
-  }
-});
+    // 卡片依序淡入，最多延遲 0.4 秒
+    return `
+      <article class="product-card" style="animation-delay:${Math.min(index * 50, 400)}ms">
+        ${originLine ? `<div class="product-origin">${originLine}</div>` : ''}
+        <h3 class="product-title">${escapeHtml(product.name)}</h3>
+        ${renderRoastScale(product.roast_level)}
+        ${tags ? `<div class="flavor-tag-container">${tags}</div>` : ''}
+        <div class="product-footer">
+          <div class="product-price">NT$${formatPrice(product.price)}<span>/ 磅</span></div>
+          <a href="${MOM_ORDER_URL}" target="_blank" rel="noopener noreferrer" class="btn-order">下單 →</a>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+// 7. 公告欄與 VIP 儲值方案的收合互動
+function setupCollapsible(toggleId, bodyId) {
+  const toggle = document.getElementById(toggleId);
+  const body = document.getElementById(bodyId);
+  if (!toggle || !body) return;
+  const card = toggle.closest('.card-box');
+  const text = toggle.querySelector('.toggle-text');
+
+  toggle.addEventListener('click', () => {
+    const isOpen = card.classList.contains('is-open');
+    body.style.maxHeight = isOpen ? '0px' : body.scrollHeight + 'px';
+    card.classList.toggle('is-open', !isOpen);
+    toggle.setAttribute('aria-expanded', String(!isOpen));
+    if (text) text.textContent = isOpen ? '展開' : '收合';
+  });
+}
+
+setupCollapsible('notice-toggle', 'notice-body');
+setupCollapsible('vip-toggle', 'vip-body');
 
 // 8. Cookie 工具與同意條款互動邏輯
 function getCookie(name) {
@@ -287,10 +330,8 @@ function setCookie(name, value, days) {
 const consentEl = document.getElementById('cookie-consent');
 const acceptBtn = document.getElementById('accept-cookie-btn');
 
-if (getCookie('cookieConsent') === 'true') {
-  if (consentEl) consentEl.style.display = 'none';
-} else {
-  if (consentEl) consentEl.style.display = 'flex';
+if (consentEl) {
+  consentEl.style.display = getCookie('cookieConsent') === 'true' ? 'none' : 'flex';
 }
 
 if (acceptBtn) {
