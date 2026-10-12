@@ -205,7 +205,7 @@ https://liff.line.me/你的LIFF ID?view=orders
 - **客人登入時看到錯誤？**
   - 確認 LINE Login channel 已經 **Publish**（步驟 5）。
   - 確認 LIFF 的 Endpoint URL 是 `https://jiayi0910.github.io/ENTROPY_BAKING/`，結尾要有 `/`。
-- **客人登入後無法下單、改用 LINE 傳訂單？** 通常是 Firestore 規則還是舊的，請做步驟 9。
+- **客人登入後無法送出訂單？** 通常是 Firestore 規則還是舊的，請做步驟 9。畫面上的錯誤代碼若是 `permission-denied`，就是這個原因。
 - **改了程式要重新部署嗎？** 要，照步驟 8。只改指令碼屬性就不用。
 - **沒收到 Email？** 先看垃圾郵件匣；再到 Apps Script 左邊「執行項目」看有沒有錯誤。就算 Email 沒寄出，訂單也會出現在後台「訂單管理」。
 - **試算表裡有客人的姓名、電話、地址**，請不要分享給管理員以外的人。

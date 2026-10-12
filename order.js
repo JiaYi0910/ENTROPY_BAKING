@@ -1,5 +1,5 @@
 // 咖啡豆購物車：加入購物車 → ① 購物車 → ② 填寫資料 → ③ 訂單完成；另有 VIP 申請儲值
-// 訂單存進 Firebase 給後台查看；存檔失敗時可改用 LINE 傳送，不會漏單
+// 訂單一律從網頁送出，存進 Firebase 給後台查看
 import {
   PROCESS_OPTIONS, SIZE_OPTIONS, DELIVERY_OPTIONS, TOPUP_PLANS,
   normalizeSettings, money, sizeLabel, unitPrice, processingFee, calcTotals,
@@ -20,7 +20,6 @@ let cart = loadCart(); // [{ id, name, process, size, qty }]
 let removedNotice = '';
 let dialogState = null;     // 加入購物車視窗目前的選擇 { product, process, size, qty }
 let orderSubmitter = null;  // 由 script.js 提供：把訂單存進 Firebase
-let pendingOrder = null;    // 存檔失敗、等待改用 LINE 傳送的訂單
 let lastOrder = null;       // 購物訂單完成頁顯示用
 let lastTopup = null;       // 儲值申請完成頁顯示用
 let isSubmitting = false;
@@ -213,7 +212,6 @@ export function initOrder() {
   form.addEventListener('input', clearCheckoutError);
   form.addEventListener('submit', submitOrder);
   $('btn-back-cart').addEventListener('click', () => showStep('cart'));
-  $('btn-line-fallback').addEventListener('click', sendPendingOrderByLine);
 
   // ③ 訂單完成
   $('btn-copy-order').addEventListener('click', async () => {
@@ -228,11 +226,7 @@ export function initOrder() {
     if (button) openTopupDialog(Number(button.dataset.plan));
   });
   $('topup-form').addEventListener('submit', submitTopup);
-  $('topup-form').addEventListener('input', () => {
-    $('topup-error').hidden = true;
-    $('btn-topup-line').hidden = true;
-  });
-  $('btn-topup-line').addEventListener('click', sendPendingTopupByLine);
+  $('topup-form').addEventListener('input', () => { $('topup-error').hidden = true; });
 
   renderCart();
 }
@@ -446,7 +440,6 @@ function renderCheckoutSummary() {
 
 function clearCheckoutError() {
   $('checkout-error').hidden = true;
-  $('btn-line-fallback').hidden = true;
 }
 
 function showCheckoutError(message, field) {
@@ -543,6 +536,12 @@ function buildOrderMessage(order) {
   ].join('\n');
 }
 
+// 送出失敗時的說明；附上錯誤代碼，客人截圖給店家時方便查原因
+function submitErrorText(what, error) {
+  const code = String(error?.code || error?.message || '未知').slice(0, 40);
+  return `${what}暫時無法送出，請確認網路連線後再按一次。（錯誤代碼：${code}）`;
+}
+
 function setSubmitting(button, submitting, idleText) {
   isSubmitting = submitting;
   button.disabled = submitting;
@@ -563,23 +562,13 @@ async function submitOrder(e) {
     if (!orderSubmitter) throw new Error('訂單系統尚未連線');
     const saved = await orderSubmitter(order);
     notifyServer(order, saved?.id);
-    finishOrder(order, true);
+    finishOrder(order);
   } catch (error) {
     console.error('訂單送出失敗', error);
-    pendingOrder = order;
-    showCheckoutError('訂單暫時無法送出，請稍後再試；或按下方「改用 LINE 傳送訂單」，一樣可以完成訂購。');
-    $('btn-line-fallback').hidden = false;
+    showCheckoutError(submitErrorText('訂單', error));
   } finally {
     setSubmitting(button, false, '確認送出訂單');
   }
-}
-
-// 存檔失敗時的備用方案：把訂單內容帶入 LINE
-function sendPendingOrderByLine() {
-  if (!pendingOrder) return;
-  window.open(lineMessageUrl(buildOrderMessage(pendingOrder)), '_blank', 'noopener');
-  finishOrder(pendingOrder, false);
-  pendingOrder = null;
 }
 
 // 通知 Google 小幫手有新訂單：寄 Email 給管理員、用 LINE 傳訂單確認給客人
@@ -615,7 +604,7 @@ export function paymentInfoHtml(order) {
     : '<p class="bank-pending">轉帳帳號將由店家在 LINE 上提供。</p>';
   const after = order.type === 'topup' ? '確認入帳後即為您加值' : '確認入帳後即安排出貨';
   return `<p class="payment-title">💳 請轉帳 <strong>${total}</strong> 至以下帳戶</p>${bank}
-    <p class="payment-note">轉帳後請按下方按鈕，用 LINE 回覆<strong>帳號後五碼</strong>，${after}。</p>`;
+    <p class="payment-note">轉帳後請按下方按鈕，用 LINE 回覆<strong>帳號後五碼</strong>，${after}。若 LINE 顯示「連線失敗」，回到這頁再按一次即可。</p>`;
 }
 
 export function reportPaymentUrl(order) {
@@ -627,7 +616,7 @@ export function reportPaymentUrl(order) {
 
 // ========== ③ 訂單完成 ==========
 
-function finishOrder(order, saved) {
+function finishOrder(order) {
   lastOrder = order;
   cart = [];
   removedNotice = '';
@@ -635,7 +624,7 @@ function finishOrder(order, saved) {
   $('checkout-form').reset();
   renderCart();
 
-  $('done-title').textContent = saved ? '訂單已送出，謝謝您的訂購！' : '訂單內容已帶入 LINE，請記得按「傳送」！';
+  $('done-title').textContent = '訂單已送出，謝謝您的訂購！';
   $('done-order-no').textContent = order.order_no;
   $('done-payment').innerHTML = paymentInfoHtml(order);
   const report = $('btn-report-payment');
@@ -678,12 +667,9 @@ async function openTopupDialog(amount) {
     el.hidden = el.dataset.topupStep !== 'form';
   });
   $('topup-error').hidden = true;
-  $('btn-topup-line').hidden = true;
   $('topup-dialog').showModal();
   $('topup-title').focus();
 }
-
-let pendingTopup = null;
 
 async function submitTopup(e) {
   e.preventDefault();
@@ -723,19 +709,10 @@ async function submitTopup(e) {
     finishTopup(order);
   } catch (error) {
     console.error('儲值申請送出失敗', error);
-    pendingTopup = order;
-    showError('儲值申請暫時無法送出，請稍後再試；或按下方「改用 LINE 申請儲值」。');
-    $('btn-topup-line').hidden = false;
+    showError(submitErrorText('儲值申請', error));
   } finally {
     setSubmitting(button, false, '送出儲值申請');
   }
-}
-
-function sendPendingTopupByLine() {
-  if (!pendingTopup) return;
-  window.open(lineMessageUrl(buildOrderMessage(pendingTopup)), '_blank', 'noopener');
-  finishTopup(pendingTopup);
-  pendingTopup = null;
 }
 
 function finishTopup(order) {

@@ -47,6 +47,11 @@ img {
     max-width: 100%;
 }
 
+/* 設成隱藏的元素一定不顯示（避免按鈕等樣式的 display 蓋過 hidden） */
+[hidden] {
+    display: none !important;
+}
+
 :focus-visible {
     outline: 2px solid var(--accent-color);
     outline-offset: 3px;
