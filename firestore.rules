@@ -35,13 +35,19 @@ service cloud.firestore {
         && d.note is string && d.note.size() <= 200
         && d.amounts is map && d.amounts.total is number && d.amounts.total >= 0
         && d.payment_method in ['transfer', 'stored_value']
+        && isOwnedByRequester(d)
         && (isValidShopOrder(d) || isValidTopup(d));
+    }
+
+    // 用 LINE 登入的客人，訂單上記的身分必須是本人（不能幫別人下單或冒用別人的身分）
+    function isOwnedByRequester(d) {
+      return !('customer_uid' in d) || (request.auth != null && d.customer_uid == request.auth.uid);
     }
 
     function isValidShopOrder(d) {
       return d.type == 'order'
         && d.keys().hasOnly(['type', 'order_no', 'status', 'payment_method', 'delivery', 'delivery_label',
-                             'customer', 'note', 'items', 'amounts', 'created_at'])
+                             'customer', 'note', 'items', 'amounts', 'created_at', 'customer_uid'])
         && d.delivery in ['pickup', 'cvs', 'home']
         && d.items is list && d.items.size() > 0 && d.items.size() <= 30;
     }
@@ -49,7 +55,7 @@ service cloud.firestore {
     function isValidTopup(d) {
       return d.type == 'topup'
         && d.keys().hasOnly(['type', 'order_no', 'status', 'payment_method', 'customer', 'note',
-                             'topup', 'amounts', 'created_at'])
+                             'topup', 'amounts', 'created_at', 'customer_uid'])
         && d.payment_method == 'transfer'
         && d.topup is map && d.topup.plan_amount is number && d.topup.plan_amount > 0;
     }
@@ -67,10 +73,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // 訂單：客人只能「新增」，看不到也改不了任何訂單（包括自己的）；管理員可以查看與處理
+    // 訂單：客人可以「新增」；用 LINE 登入的客人只看得到自己的訂單，改不了任何訂單；管理員可以查看與處理
     match /orders/{orderId} {
       allow create: if isValidNewOrder(request.resource.data);
-      allow read, update, delete: if isAdmin();
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.customer_uid == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     // 儲值會員餘額與交易紀錄：只有管理員能看、能改

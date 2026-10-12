@@ -50,6 +50,20 @@ async function copyText(text) {
   }
 }
 
+// 訂單狀態改變後，請 Google 小幫手用 LINE 通知客人（只有用 LINE 登入下單的客人收得到；同一個狀態只通知一次）
+function notifyCustomer(orderId) {
+  const url = settings.notify_url;
+  if (!url.startsWith('https://script.google.com/')) return;
+  fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'order-status', orderId })
+  }).catch(() => {
+    // 通知失敗不影響訂單狀態
+  });
+}
+
 // ========== 啟動與停止（登入、登出時由 admin.js 呼叫） ==========
 
 export function initShop(context) {
@@ -324,6 +338,7 @@ function customerHtml(o) {
       ${c.store ? `<div><dt>全家門市</dt><dd>${esc(c.store)}</dd></div>` : ''}
       ${c.address ? `<div><dt>收件地址</dt><dd>${esc(c.address)}</dd></div>` : ''}
       <div><dt>付款方式</dt><dd>${esc(paymentLabel(o.payment_method))}</dd></div>
+      <div><dt>LINE</dt><dd>${o.customer_uid ? '✓ 已用 LINE 登入（付款、出貨時會自動通知客人）' : '未用 LINE 登入（不會自動通知）'}</dd></div>
       ${o.note ? `<div><dt>客人備註</dt><dd>${esc(o.note)}</dd></div>` : ''}
     </dl>`;
 }
@@ -413,9 +428,11 @@ async function onOrderSave(e) {
     return;
   }
   const button = form.querySelector('button[type="submit"]');
+  const statusChanged = orders.get(id)?.status !== data.status;
   button.disabled = true;
   try {
     await updateDoc(doc(ctx.db, 'orders', id), data);
+    if (statusChanged) notifyCustomer(id);
     document.activeElement?.blur();
     ctx.showToast(`已更新訂單 ${orders.get(id)?.order_no ?? ''}`);
   } catch (error) {
@@ -525,6 +542,7 @@ async function runBalanceChange(button, { success, ...change }) {
   button.disabled = true;
   try {
     await changeBalance(change);
+    if (change.orderId) notifyCustomer(change.orderId); // 加值完成、扣款後訂單狀態有變
     ctx.showToast(success);
   } catch (error) {
     console.error('儲值金更新失敗', error);
@@ -619,7 +637,7 @@ async function onMemberToggle(e) {
 // ========== 商店設定 ==========
 
 const SETTING_FIELDS = ['bank_code', 'bank_name', 'bank_account', 'bank_holder', 'shipping_cvs', 'shipping_home',
-  'free_shipping_threshold', 'fee_1lb', 'fee_half', 'notify_url'];
+  'free_shipping_threshold', 'fee_1lb', 'fee_half', 'notify_url', 'liff_id'];
 
 function fillSettingsForm() {
   const form = $('settings-form').elements;
@@ -643,6 +661,12 @@ function readSettingsForm() {
   if (data.bank_account && !/^[\d-]{6,20}$/.test(data.bank_account)) throw new ShopError('轉帳帳號請只填數字');
   if (data.notify_url && !data.notify_url.startsWith('https://script.google.com/')) {
     throw new ShopError('Email 通知網址必須是 https://script.google.com/ 開頭的 Google Apps Script 網址');
+  }
+  if (data.liff_id && !/^\d+-[A-Za-z0-9]+$/.test(data.liff_id)) {
+    throw new ShopError('LIFF ID 格式不正確，應該像「1234567890-AbCdEfGh」');
+  }
+  if (data.liff_id && !data.notify_url) {
+    throw new ShopError('LINE 登入需要先填寫 Google Apps Script 網址');
   }
   return data;
 }
@@ -673,25 +697,36 @@ async function onSaveSettings(e) {
   }
 }
 
-function onTestNotify() {
+// 寄測試信，並請 Google 小幫手回報哪些設定已完成
+async function onTestNotify() {
   const url = $('settings-form').elements.notify_url.value.trim();
+  const box = $('notify-test-result');
   if (!url.startsWith('https://script.google.com/')) {
     ctx.showToast('請先填寫正確的 Google Apps Script 網址', 'error');
     return;
   }
-  fetch(url, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({
-      test: true,
-      type: 'order',
-      order_no: 'TEST-' + Date.now().toString().slice(-6),
-      customer: { name: '測試客人', phone: '0900000000' },
-      items: [],
-      amounts: { total: 0 },
-      message: '這是一封測試通知。收到這封信，代表新訂單 Email 通知已經設定成功！'
-    })
-  }).then(() => ctx.showToast('已送出測試通知，請到管理員信箱查看（約 1 分鐘內收到）'))
-    .catch(() => ctx.showToast('測試通知送出失敗，請確認網址是否正確', 'error'));
+  const button = $('btn-test-notify');
+  button.disabled = true;
+  box.hidden = false;
+  box.textContent = '檢查中，約需 10 秒…';
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'test' })
+    });
+    const r = await res.json();
+    const row = (ok, label, fix) => `<li class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'} ${label}${ok ? '' : `：${fix}`}</li>`;
+    box.innerHTML = `<strong>設定檢查結果</strong><ul>
+      ${row(r.email, 'Email 通知（已寄出測試信，約 1 分鐘內收到）', '這小時寄太多封了，請稍後再試')}
+      ${row(r.sheet, '訂單備份到 Google 試算表', 'Apps Script 要從試算表的「擴充功能」建立')}
+      ${row(r.firebase, '讀寫訂單資料（Firebase 服務帳戶）', r.firebaseError ? esc(r.firebaseError) : '指令碼屬性 FIREBASE_SERVICE_ACCOUNT 還沒填或格式不對')}
+      ${row(r.linePush, 'LINE 機器人傳訊息給客人', '指令碼屬性 LINE_CHANNEL_ACCESS_TOKEN 還沒填或已失效')}
+      ${row(r.lineLogin, 'LINE 登入', '指令碼屬性 LINE_LOGIN_CHANNEL_ID 還沒填')}
+    </ul>`;
+  } catch {
+    box.innerHTML = '<span class="no">✗ 無法取得檢查結果：請確認網址正確、Apps Script 已貼上最新版程式，並重新部署（誰可以存取選「所有人」）。</span>';
+  } finally {
+    button.disabled = false;
+  }
 }

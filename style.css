@@ -1913,6 +1913,135 @@ section[data-step="done"] > .btn-block {
 }
 
 /* ==========================================
+   13. 我的訂單與 LINE 登入
+   ========================================== */
+.checkout-login-note {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background-color: #eafaf0;
+    font-size: 13px;
+    color: #146c3a;
+}
+
+.orders-login,
+.orders-empty {
+    padding: 28px 8px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.orders-login p,
+.orders-empty p {
+    margin-bottom: 16px;
+    line-height: 1.8;
+}
+
+.orders-login-icon {
+    margin-bottom: 8px;
+    font-size: 40px;
+}
+
+.orders-login .form-error {
+    margin-top: 14px;
+}
+
+.orders-user {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background-color: var(--surface-warm);
+    font-size: 14px;
+}
+
+.my-orders {
+    display: grid;
+    gap: 12px;
+    list-style: none;
+}
+
+.my-order {
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+}
+
+.my-order-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.my-order-head strong {
+    letter-spacing: 0.5px;
+}
+
+.my-order-meta {
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.my-order-items {
+    margin: 10px 0;
+    padding-left: 18px;
+    font-size: 14px;
+}
+
+.my-order-total {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.my-order-total strong {
+    margin-left: 4px;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    color: var(--text-main);
+}
+
+.my-order-hint {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: var(--accent-hover);
+}
+
+.my-order .payment-box {
+    margin: 12px 0 10px;
+}
+
+.type-tag {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background-color: #f3e8ff;
+    font-size: 11px;
+    font-weight: 600;
+    color: #7c3aed;
+    vertical-align: middle;
+}
+
+/* 訂單狀態（顏色跟後台一致） */
+.order-status {
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-待付款 { background-color: #fff1e0; color: #c2410c; }
+.status-已付款 { background-color: #e0ecff; color: #1d4ed8; }
+.status-已出貨 { background-color: #efe7ff; color: #6d28d9; }
+.status-已完成 { background-color: #e6f4ea; color: #137333; }
+.status-已取消 { background-color: #eeeeee; color: #6b6b6b; }
+
+/* ==========================================
    響應式調整
    ========================================== */
 @media (max-width: 900px) {
@@ -1940,6 +2069,8 @@ section[data-step="done"] > .btn-block {
     .nav-links a { padding: 6px 7px; font-size: 13px; }
     /* 手機版導覽列字數縮短：「儲值方案」→「儲值」、「門市資訊」→「門市」 */
     .nav-long { display: none; }
+    /* 手機版導覽列空間有限：「公告」就在主視覺下方，捲一下就看得到 */
+    .nav-hide-mobile { display: none; }
     .nav-right { gap: 4px; }
     .cart-button { width: 38px; height: 38px; }
 

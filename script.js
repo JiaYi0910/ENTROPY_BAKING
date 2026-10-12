@@ -1,5 +1,7 @@
-import { initOrder, openProductDialog, syncProducts, setShopSettings, setOrderSubmitter, escapeHtml } from "./order.js";
+import { initOrder, openProductDialog, syncProducts, setShopSettings, setOrderSubmitter, escapeHtml, getShopSettings, handleAfterLogin } from "./order.js";
 import { money, unitPrice } from "./pricing.js";
+import { initCustomerAuth, configureLineLogin, setAfterLoginHandler } from "./line-login.js";
+import { setupMyOrdersUi, initMyOrders, openMyOrders } from "./my-orders.js";
 
 // 全域變數：存放從 Firebase 抓下來的商品
 let allProducts = [];
@@ -23,6 +25,26 @@ function hasValue(value) {
   return text !== '' && text !== '無' && text !== '-';
 }
 
+// 主選單顯示後才能打開視窗（例如從 LINE 連結打開「我的訂單」），在那之前先排隊等著
+const menuReadyCallbacks = [];
+let menuVisible = false;
+
+function showMenu() {
+  const menuWrapper = document.getElementById('menu-wrapper');
+  if (menuWrapper) menuWrapper.style.display = 'block';
+  menuVisible = true;
+  menuReadyCallbacks.splice(0).forEach(fn => fn());
+}
+
+function whenMenuVisible(fn) {
+  if (menuVisible) fn();
+  else menuReadyCallbacks.push(fn);
+}
+
+// 從 LINE 訊息的連結、或剛用 LINE 登入回來的客人，本來就是 LINE 好友，不用再看加好友視窗
+const pageParams = new URLSearchParams(location.search);
+const fromLine = ['view', 'after_login', 'liff.state'].some(key => pageParams.has(key));
+
 // 1. 開場動畫結束後，才根據驗證狀態決定是否顯示加好友視窗
 window.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById("splash-screen");
@@ -33,6 +55,15 @@ window.addEventListener('DOMContentLoaded', () => {
   if (friendCheck) friendCheck.style.display = 'none';
   if (menuWrapper) menuWrapper.style.display = 'none';
 
+  const showMenuOrFriendCheck = () => {
+    // 檢查是否已經通過 LINE 好友驗證
+    if (getCookie('lineVerified') === 'true' || fromLine) {
+      showMenu();
+    } else if (friendCheck) {
+      friendCheck.style.display = 'flex';
+    }
+  };
+
   if (splash) {
     // 停留 1.2 秒讓客人看清楚 Logo
     setTimeout(() => {
@@ -42,20 +73,10 @@ window.addEventListener('DOMContentLoaded', () => {
     // 2 秒後完全移除開場動畫
     setTimeout(() => {
       splash.remove();
-
-      // 檢查是否已經通過 LINE 好友驗證
-      if (getCookie('lineVerified') === 'true') {
-        if (menuWrapper) menuWrapper.style.display = 'block';
-      } else {
-        if (friendCheck) friendCheck.style.display = 'flex';
-      }
+      showMenuOrFriendCheck();
     }, 2000);
   } else {
-    if (getCookie('lineVerified') === 'true') {
-      if (menuWrapper) menuWrapper.style.display = 'block';
-    } else {
-      if (friendCheck) friendCheck.style.display = 'flex';
-    }
+    showMenuOrFriendCheck();
   }
 
   checkBusinessStatus();
@@ -69,10 +90,8 @@ if (confirmBtn) {
   confirmBtn.addEventListener('click', () => {
     setCookie('lineVerified', 'true', 30);
     const friendCheck = document.getElementById('line-friend-check');
-    const menuWrapper = document.getElementById('menu-wrapper');
-
     if (friendCheck) friendCheck.style.display = 'none';
-    if (menuWrapper) menuWrapper.style.display = 'block';
+    showMenu();
   });
 }
 
@@ -107,12 +126,22 @@ function checkBusinessStatus() {
 // 用動態載入：就算客人的網路連不到 Firebase，只有豆單顯示失敗，按鈕、開場動畫等功能照常運作
 async function loadProducts() {
   try {
-    const [{ initializeApp }, { getFirestore, collection, doc, query, where, onSnapshot, addDoc, serverTimestamp }, { firebaseConfig }] = await Promise.all([
+    const [
+      { initializeApp },
+      { getFirestore, collection, doc, query, where, onSnapshot, addDoc, serverTimestamp },
+      { getAuth, onAuthStateChanged, signInWithCustomToken, signOut, updateProfile },
+      { firebaseConfig }
+    ] = await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"),
       import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"),
+      import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"),
       import("./firebase-config.js")
     ]);
-    const db = getFirestore(initializeApp(firebaseConfig));
+    // 前台用獨立的名稱，客人的 LINE 登入和後台的管理員登入互不影響
+    const app = initializeApp(firebaseConfig, 'storefront');
+    const db = getFirestore(app);
+    initCustomerAuth({ auth: getAuth(app), onAuthStateChanged, signInWithCustomToken, signOut, updateProfile });
+    initMyOrders({ db, collection, query, where, onSnapshot });
     const q = query(collection(db, "products"), where("status", "==", "上架"));
 
     onSnapshot(q, (querySnapshot) => {
@@ -129,10 +158,11 @@ async function loadProducts() {
       filterProducts();
     }, showLoadError);
 
-    // 後台「商店設定」：轉帳帳號、運費、耗材費；讀不到時購物車會用預設值
-    onSnapshot(doc(db, "settings", "shop"),
-      (snap) => setShopSettings(snap.exists() ? snap.data() : {}),
-      (error) => console.warn('商店設定讀取失敗，使用預設值', error));
+    // 後台「商店設定」：轉帳帳號、運費、耗材費、LINE 登入；讀不到時購物車會用預設值、不開啟 LINE 登入
+    onSnapshot(doc(db, "settings", "shop"), (snap) => {
+      setShopSettings(snap.exists() ? snap.data() : {});
+      configureLineLogin(getShopSettings());
+    }, (error) => console.warn('商店設定讀取失敗，使用預設值', error));
 
     // 客人送出的訂單存到 orders，後台「訂單管理」可以看到
     setOrderSubmitter((order) => addDoc(collection(db, "orders"), { ...order, created_at: serverTimestamp() }));
@@ -173,6 +203,13 @@ if (coffeeContainer) {
 }
 
 initOrder();
+setupMyOrdersUi();
+
+// LINE 登入回來後，接著做原本要做的事（回到結帳、打開我的訂單、申請儲值）
+setAfterLoginHandler((action) => whenMenuVisible(() => (action === 'orders' ? openMyOrders() : handleAfterLogin(action))));
+// LINE 訊息裡的「查看訂單狀態」連結
+if (pageParams.get('view') === 'orders') whenMenuVisible(openMyOrders);
+
 loadProducts();
 
 // 產地選單依目前上架的商品自動產生，新產地不用改程式也篩得到

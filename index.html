@@ -50,11 +50,15 @@
 				<a href="#top" class="nav-brand">熵與焙<span>ENTROPY & BAKING</span></a>
 				<div class="nav-right">
 					<div class="nav-links">
-						<a href="#notice">公告</a>
+						<a href="#notice" class="nav-hide-mobile">公告</a>
 						<a href="#vip">儲值<span class="nav-long">方案</span></a>
 						<a href="#menu">豆單</a>
 						<a href="#store">門市<span class="nav-long">資訊</span></a>
 					</div>
+					<!-- 我的訂單：用 LINE 登入後查看自己的訂單與出貨進度 -->
+					<button type="button" class="cart-button" id="orders-button" aria-label="我的訂單" title="我的訂單">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20.5c1.4-3.6 4.2-5.5 7.5-5.5s6.1 1.9 7.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+					</button>
 					<!-- 購物車：數字是目前購物車裡的包數 -->
 					<button type="button" class="cart-button" id="cart-button" aria-label="購物車">
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 7V6a3 3 0 0 1 6 0v1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -252,6 +256,7 @@
 			<div class="footer-brand">熵與焙<span>ENTROPY & BAKING</span></div>
 			<nav class="footer-links" aria-label="頁尾連結">
 				<a href="#menu">豆單</a>
+				<a href="?view=orders" data-open-orders>我的訂單</a>
 				<a href="#cafe">甜點點餐</a>
 				<a href="#store">門市資訊</a>
 				<a href="https://line.me/R/ti/p/@245rbror" target="_blank" rel="noopener noreferrer">LINE 官方帳號</a>
@@ -322,6 +327,7 @@
 					<div class="cart-footer" id="cart-footer">
 						<div class="cart-subtotal"><span>商品小計</span><strong id="cart-subtotal"></strong></div>
 						<p class="free-ship-hint" id="cart-free-hint"></p>
+						<p class="checkout-login-note" id="checkout-login-note" hidden>💬 結帳前會請您用 LINE 登入，之後可以在「我的訂單」查看出貨進度，訂單有更新也會用 LINE 通知您。</p>
 						<div class="cart-actions">
 							<button type="button" class="btn btn-ghost" data-close>繼續購物</button>
 							<button type="button" class="btn btn-primary" id="btn-go-checkout">前往結帳 →</button>
@@ -448,6 +454,17 @@
 					</div>
 					<button type="button" class="btn btn-primary btn-block" data-close>完成</button>
 				</section>
+			</div>
+		</dialog>
+
+		<!-- 我的訂單：內容依登入狀態由 my-orders.js 產生 -->
+		<dialog id="orders-dialog" class="sheet sheet-cart" aria-labelledby="orders-title">
+			<div class="sheet-inner">
+				<div class="sheet-head">
+					<h3 id="orders-title" tabindex="-1">我的訂單</h3>
+					<button type="button" class="sheet-close" data-close aria-label="關閉">×</button>
+				</div>
+				<div id="orders-body"></div>
 			</div>
 		</dialog>
 

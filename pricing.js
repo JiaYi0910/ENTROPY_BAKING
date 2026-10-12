@@ -32,6 +32,28 @@ export const TOPUP_PLANS = [
 
 export const ORDER_STATUSES = ['待付款', '已付款', '已出貨', '已完成', '已取消'];
 
+// 給客人看的訂單狀態說明（前台「我的訂單」）
+export function statusHint(order) {
+  const isTopup = order.type === 'topup';
+  switch (order.status) {
+    case '待付款':
+      if (isTopup) return '請轉帳後用 LINE 回報帳號後五碼，確認入帳後即為您加值。';
+      return order.payment_method === 'stored_value'
+        ? '店家確認後會從您的儲值金扣款並安排出貨。'
+        : '請轉帳後用 LINE 回報帳號後五碼，確認入帳後即安排出貨。';
+    case '已付款':
+      return isTopup ? '已確認入帳，正在為您加值。' : '已確認付款，正在為您準備咖啡豆。';
+    case '已出貨':
+      return order.delivery === 'pickup' ? '咖啡豆已備妥，歡迎到門市取貨。' : '已出貨，請留意取貨通知。';
+    case '已完成':
+      return isTopup ? `已加值 ${money(order.topup?.credit)}，結帳時可選「儲值金扣款」。` : '訂單已完成，謝謝您的支持！';
+    case '已取消':
+      return '這筆訂單已取消，如有疑問歡迎用 LINE 詢問。';
+    default:
+      return '';
+  }
+}
+
 // 電話號碼統一格式（去掉空白和 -），儲值會員以電話辨識
 export function normalizePhone(phone) {
   return String(phone ?? '').replace(/[\s-]/g, '');
@@ -56,7 +78,8 @@ export const DEFAULT_SETTINGS = {
   free_shipping_threshold: 3000,
   fee_1lb: 200,
   fee_half: 100,
-  notify_url: ''
+  notify_url: '', // Google Apps Script 網址（Email、LINE 通知與 LINE 登入）
+  liff_id: ''     // LINE 登入（LIFF）的 ID；沒填就不需要登入，維持原本的下單方式
 };
 
 // 把資料庫裡的設定整理成正確的型別，缺的用預設值補上

@@ -5,6 +5,7 @@ import {
   normalizeSettings, money, sizeLabel, unitPrice, processingFee, calcTotals,
   normalizePhone, isValidPhone, paymentLabel
 } from './pricing.js';
+import { isLineLoginEnabled, getCustomer, requireCustomer, onCustomerChange } from './line-login.js';
 
 const LINE_ID = '@245rbror';
 const CART_KEY = 'entropy-cart-v1';
@@ -146,13 +147,27 @@ export function setOrderSubmitter(fn) {
   orderSubmitter = fn;
 }
 
+export function getShopSettings() {
+  return settings;
+}
+
+// LINE 登入完成後接著做原本要做的事
+export function handleAfterLogin(action) {
+  if (action === 'checkout') {
+    openCart();
+    if (cart.length) goToCheckout();
+  } else if (action.startsWith('topup:')) {
+    openTopupDialog(Number(action.slice(6)));
+  }
+}
+
 export function initOrder() {
   const productDialog = $('product-dialog');
   const cartDialog = $('cart-dialog');
   const topupDialog = $('topup-dialog');
   if (!productDialog || !cartDialog || !topupDialog) return;
 
-  [productDialog, cartDialog, topupDialog].forEach(dialog => {
+  [productDialog, cartDialog, topupDialog, $('orders-dialog')].filter(Boolean).forEach(dialog => {
     dialog.addEventListener('click', (e) => {
       // 點視窗外的灰色背景，或有 data-close 的按鈕就關閉
       if (e.target === dialog || e.target.closest('[data-close]')) dialog.close();
@@ -188,10 +203,9 @@ export function initOrder() {
   // ① 購物車
   $('cart-button').addEventListener('click', openCart);
   $('cart-items').addEventListener('click', onCartItemClick);
-  $('btn-go-checkout').addEventListener('click', () => {
-    clearCheckoutError();
-    showStep('checkout');
-  });
+  $('btn-go-checkout').addEventListener('click', goToCheckout);
+  // 有沒有開啟 LINE 登入、客人登入了沒，會影響結帳按鈕的文字
+  onCustomerChange(renderLoginRequirement);
 
   // ② 填寫資料
   const form = $('checkout-form');
@@ -309,6 +323,32 @@ function showStep(step) {
   $('cart-title').textContent = STEP_TITLES[step];
   $('cart-dialog').querySelector('.sheet-inner').scrollTop = 0;
   if (step === 'checkout') renderCheckoutSummary();
+}
+
+// 結帳前要先用 LINE 登入（後台有設定 LINE 登入時），訂單才能綁定客人、之後查得到
+async function goToCheckout() {
+  clearCheckoutError();
+  if (isLineLoginEnabled() && !getCustomer()) {
+    const button = $('btn-go-checkout');
+    button.disabled = true;
+    try {
+      await requireCustomer('checkout'); // 會跳到 LINE 登入頁，回來後自動繼續
+    } catch (error) {
+      showToast(error.message);
+      return;
+    } finally {
+      button.disabled = false;
+    }
+  }
+  showStep('checkout');
+  const nameField = $('checkout-form').elements.customer_name;
+  if (!nameField.value && getCustomer()?.name) nameField.value = getCustomer().name;
+}
+
+function renderLoginRequirement() {
+  const needLogin = isLineLoginEnabled() && !getCustomer();
+  $('btn-go-checkout').textContent = needLogin ? '用 LINE 登入並結帳 →' : '前往結帳 →';
+  $('checkout-login-note').hidden = !needLogin;
 }
 
 function onCartItemClick(e) {
@@ -443,6 +483,7 @@ function buildOrder(data) {
   if (data.delivery === 'cvs') customer.store = data.store;
   if (data.delivery === 'home') customer.address = data.address;
   return {
+    ...ownerField(),
     type: 'order',
     order_no: makeOrderNo(),
     status: '待付款',
@@ -454,6 +495,12 @@ function buildOrder(data) {
     items: lines.map(l => ({ product_id: l.id, name: l.name, process: l.process, size: l.size, qty: l.qty, unit: l.unit, fee: l.fee, total: l.total })),
     amounts: { goods: t.goods, fees: t.fees, shipping: t.shipping, total: t.total }
   };
+}
+
+// 用 LINE 登入的客人，訂單記下是誰的（安全規則會檢查必須是本人）
+function ownerField() {
+  const customer = getCustomer();
+  return customer ? { customer_uid: customer.uid } : {};
 }
 
 // 給 LINE、Email 通知用的文字版訂單
@@ -514,8 +561,8 @@ async function submitOrder(e) {
   setSubmitting(button, true, '確認送出訂單');
   try {
     if (!orderSubmitter) throw new Error('訂單系統尚未連線');
-    await orderSubmitter(order);
-    notifyAdmins(order);
+    const saved = await orderSubmitter(order);
+    notifyServer(order, saved?.id);
     finishOrder(order, true);
   } catch (error) {
     console.error('訂單送出失敗', error);
@@ -535,8 +582,10 @@ function sendPendingOrderByLine() {
   pendingOrder = null;
 }
 
-// 通知管理員（Email）：網址在後台「商店設定」填寫；只允許 Google Apps Script，避免訂單資料被送到別處
-function notifyAdmins(order) {
+// 通知 Google 小幫手有新訂單：寄 Email 給管理員、用 LINE 傳訂單確認給客人
+// 網址在後台「商店設定」填寫；只允許 Google Apps Script，避免訂單資料被送到別處
+// 小幫手會用 orderId 到資料庫讀真正的訂單；還沒設定好資料庫權限時，才用這裡附的文字寄 Email
+function notifyServer(order, orderId) {
   const url = settings.notify_url;
   if (!url.startsWith('https://script.google.com/')) return;
   fetch(url, {
@@ -544,14 +593,14 @@ function notifyAdmins(order) {
     mode: 'no-cors',
     keepalive: true,
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ ...order, message: buildOrderMessage(order) })
+    body: JSON.stringify({ ...order, action: 'order-created', orderId, message: buildOrderMessage(order) })
   }).catch(() => {
     // 通知失敗不影響訂單，訂單已存在後台
   });
 }
 
-// 完成頁的付款說明：轉帳顯示帳號；儲值金扣款說明會由店家扣款
-function paymentInfoHtml(order) {
+// 完成頁、我的訂單的付款說明：轉帳顯示帳號；儲值金扣款說明會由店家扣款
+export function paymentInfoHtml(order) {
   const total = money(order.amounts.total);
   if (order.payment_method === 'stored_value') {
     return `<p class="payment-title">💎 儲值金扣款 <strong>${total}</strong></p>
@@ -569,7 +618,7 @@ function paymentInfoHtml(order) {
     <p class="payment-note">轉帳後請按下方按鈕，用 LINE 回覆<strong>帳號後五碼</strong>，${after}。</p>`;
 }
 
-function reportPaymentUrl(order) {
+export function reportPaymentUrl(order) {
   if (order.payment_method === 'stored_value') {
     return lineMessageUrl(`您好，我的訂單編號：${order.order_no}（儲值金扣款 ${money(order.amounts.total)}）`);
   }
@@ -609,8 +658,19 @@ function renderTopupPlans() {
   `).join('');
 }
 
-function openTopupDialog(amount) {
+async function openTopupDialog(amount) {
+  // 申請儲值也要先用 LINE 登入，之後才查得到申請進度
+  if (isLineLoginEnabled() && !getCustomer()) {
+    try {
+      await requireCustomer(`topup:${amount}`);
+    } catch (error) {
+      showToast(error.message);
+      return;
+    }
+  }
   const plan = TOPUP_PLANS.find(p => p.amount === amount) ?? TOPUP_PLANS[0];
+  const nameField = $('topup-form').elements.customer_name;
+  if (!nameField.value && getCustomer()?.name) nameField.value = getCustomer().name;
   $('topup-plans').innerHTML = TOPUP_PLANS.map(p =>
     optionChip('plan', String(p.amount), `儲值 ${money(p.amount)}`, p === plan, `加贈 ${money(p.bonus)}・共 ${money(p.amount + p.bonus)}`)
   ).join('');
@@ -643,6 +703,7 @@ async function submitTopup(e) {
   if (!isValidPhone(phone)) return showError('請填寫正確的聯絡電話（例如 0912345678）', form.customer_phone);
 
   const order = {
+    ...ownerField(),
     type: 'topup',
     order_no: makeOrderNo(),
     status: '待付款',
@@ -657,8 +718,8 @@ async function submitTopup(e) {
   setSubmitting(button, true, '送出儲值申請');
   try {
     if (!orderSubmitter) throw new Error('訂單系統尚未連線');
-    await orderSubmitter(order);
-    notifyAdmins(order);
+    const saved = await orderSubmitter(order);
+    notifyServer(order, saved?.id);
     finishTopup(order);
   } catch (error) {
     console.error('儲值申請送出失敗', error);

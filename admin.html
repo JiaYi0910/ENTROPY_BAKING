@@ -409,6 +409,24 @@
             grid-template-columns: repeat(3, 1fr);
         }
 
+        .notify-test-result {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: var(--soft-bg);
+            font-size: 14px;
+        }
+
+        .notify-test-result ul {
+            margin: 6px 0 0;
+            padding-left: 4px;
+            list-style: none;
+        }
+
+        .notify-test-result li { padding: 2px 0; }
+        .notify-test-result .ok { color: var(--success); }
+        .notify-test-result .no { color: var(--danger); }
+
         /* ===== 表單 ===== */
         .form-grid {
             display: grid;
@@ -969,18 +987,24 @@
                     </div>
                 </div>
 
-                <h3 class="settings-heading">📧 新訂單 Email 通知</h3>
+                <h3 class="settings-heading">📧 Email 與 LINE 通知</h3>
                 <div class="form-group">
                     <label for="s-notify-url">Google Apps Script 網址</label>
                     <input type="url" id="s-notify-url" name="notify_url" maxlength="300" placeholder="https://script.google.com/macros/s/……/exec">
-                    <div class="hint">設定方式請看 GitHub 專案裡 notify 資料夾的說明；留空表示不寄 Email（後台開著時仍會跳出新訂單提示）</div>
+                    <div class="hint">新訂單 Email、LINE 通知客人、LINE 登入都靠它。設定方式請看 GitHub 專案裡 notify 資料夾的說明</div>
+                </div>
+                <div class="form-group">
+                    <label for="s-liff-id">LINE 登入（LIFF ID）</label>
+                    <input type="text" id="s-liff-id" name="liff_id" maxlength="40" placeholder="例如：1234567890-AbCdEfGh">
+                    <div class="hint">填了之後，客人結帳、查訂單時要用 LINE 登入；留空就維持不需登入的下單方式</div>
                 </div>
 
                 <p id="settings-error" class="form-error" role="alert" hidden></p>
                 <div class="form-actions">
                     <button type="submit" id="btn-save-settings">💾 儲存商店設定</button>
-                    <button type="button" id="btn-test-notify" class="btn-secondary">寄送測試通知</button>
+                    <button type="button" id="btn-test-notify" class="btn-secondary">寄送測試通知並檢查設定</button>
                 </div>
+                <div id="notify-test-result" class="notify-test-result" hidden></div>
             </form>
         </section>
     </div>
