@@ -1,14 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBJ7FSvcaZjwWmWAjAmt9grWhzPYCwaTNQ",
-  authDomain: "gengenhao-coffee.firebaseapp.com",
-  projectId: "gengenhao-coffee", 
-  storageBucket: "gengenhao-coffee.firebasestorage.app",
-  messagingSenderId: "236932259007",
-  appId: "1:236932259007:web:3b93dfdfd9d94447e2ba0a"
-};
+import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -106,6 +98,8 @@ onSnapshot(q, (querySnapshot) => {
   querySnapshot.forEach((doc) => {
     allProducts.push({ id: doc.id, ...doc.data() });
   });
+  // 依後台設定的「前台排序」由小到大排列；沒設定的視為 0，同數字時維持原本順序
+  allProducts.sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
   filterProducts();
 });
 

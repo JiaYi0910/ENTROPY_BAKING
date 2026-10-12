@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 後台頁面不需要被搜尋引擎收錄 -->
+    <meta name="robots" content="noindex, nofollow">
     <title>熵與焙 - 後台管理系統</title>
     <!-- 引入與前台一致的高質感 Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,42 +19,48 @@
             --accent-color: #b08968;
             --accent-hover: #9c7553;
             --border-color: #e6dfd5;
+            --soft-bg: #f7f3ec;
+            --success: #137333;
+            --success-bg: #e6f4ea;
+            --danger: #c5221f;
+            --danger-bg: #fce8e6;
+            --warning: #b45309;
             --font-serif: 'Noto Serif TC', serif;
             --font-sans: 'Plus Jakarta Sans', sans-serif;
         }
 
+        [hidden] { display: none !important; }
+
         body {
             font-family: var(--font-sans), sans-serif;
-            max-width: 900px;
+            max-width: 960px;
             margin: 0 auto;
-            padding: 30px 20px;
+            padding: 30px 20px 60px;
             background: var(--bg-color);
             color: var(--text-main);
             line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
         h1, h2 {
             font-family: var(--font-serif);
             color: var(--text-main);
+            margin: 0;
         }
 
-        .admin-header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
+        /* ===== 載入中 ===== */
+        #auth-loading {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 120px 0;
+            font-size: 14px;
+            letter-spacing: 1px;
         }
 
-        .admin-header-bar h1 {
-            font-size: 24px;
-            letter-spacing: 2px;
-        }
-
-        .form-section, .list-section, #login-section {
+        /* ===== 卡片區塊 ===== */
+        .panel, #login-section {
             background: var(--card-bg);
-            padding: 30px;
+            padding: 28px;
             border-radius: 16px;
             margin-bottom: 24px;
             box-shadow: 0 4px 16px rgba(74, 59, 50, 0.03);
@@ -60,19 +68,90 @@
         }
 
         #login-section {
-            max-width: 450px;
+            max-width: 420px;
             margin: 80px auto;
-            text-align: center;
         }
 
         #login-section h2 {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .panel-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
             margin-bottom: 20px;
+        }
+
+        .panel-title h2 { font-size: 18px; }
+
+        /* ===== 頂部列 ===== */
+        .admin-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .admin-header-bar h1 {
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ===== 統計數字 ===== */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .stat-up .stat-value { color: var(--success); }
+        .stat-down .stat-value { color: var(--danger); }
+
+        /* ===== 表單 ===== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 16px;
         }
 
         .form-group {
             margin-bottom: 16px;
-            text-align: left;
         }
+
+        .form-group.full { grid-column: 1 / -1; }
 
         label {
             display: block;
@@ -81,6 +160,8 @@
             font-size: 14px;
             color: var(--text-main);
         }
+
+        .required { color: var(--danger); }
 
         input, select, textarea {
             width: 100%;
@@ -93,13 +174,59 @@
             font-size: 14px;
             font-family: var(--font-sans);
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
+
+        textarea { resize: vertical; }
 
         input:focus, select:focus, textarea:focus {
             border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.12);
         }
 
+        .hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .hint.warn { color: var(--warning); }
+
+        .tag-preview {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .flavor-badge {
+            background-color: #f4eee9;
+            color: #6f584c;
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .form-actions button[type="submit"] { flex: 2; }
+        .form-actions .btn-secondary { flex: 1; }
+
+        .form-error {
+            color: var(--danger);
+            font-size: 13px;
+            margin: 0 0 12px;
+        }
+
+        /* ===== 按鈕 ===== */
         button {
             background: var(--text-main);
             color: white;
@@ -109,54 +236,108 @@
             cursor: pointer;
             font-size: 15px;
             font-weight: 600;
-            transition: background 0.2s;
+            font-family: var(--font-sans);
+            transition: background 0.2s, opacity 0.2s;
         }
 
-        button:hover {
-            background: var(--accent-color);
+        button:hover { background: var(--accent-color); }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
         }
 
+        button:disabled:hover { background: var(--text-main); }
+
+        .btn-block { width: 100%; }
+
+        .btn-secondary { background: #a8a29e; }
+        .btn-secondary:hover { background: #78716c; }
+
+        #btn-logout {
+            background: #78716c;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        #btn-logout:hover { background: #57534e; }
+
+        /* ===== 清單工具列 ===== */
+        .list-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .list-toolbar input { flex: 2; }
+        .list-toolbar select { flex: 1; }
+
+        /* ===== 商品清單 ===== */
         .product-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
             border-bottom: 1px solid var(--border-color);
-            padding: 16px 0;
+            padding: 16px 12px;
+            margin: 0 -12px;
+            border-radius: 10px;
+            transition: background 0.2s;
         }
 
-        .product-item:last-child {
-            border-bottom: none;
+        .product-item:last-child { border-bottom: none; }
+
+        .product-item.is-editing {
+            background: #fdf3e7;
+            box-shadow: inset 3px 0 0 var(--accent-color);
         }
 
-        .product-details {
-            flex-grow: 1;
-            padding-right: 15px;
-        }
+        .product-item.is-down .product-name,
+        .product-item.is-down .product-price { opacity: 0.55; }
 
-        .product-details strong {
+        .product-details { flex-grow: 1; min-width: 0; }
+
+        .product-name {
             font-family: var(--font-serif);
             font-size: 16px;
+            font-weight: 700;
+        }
+
+        .product-price {
+            color: var(--accent-color);
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .product-meta {
+            display: block;
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--text-muted);
+            word-break: break-word;
         }
 
         .status-badge {
-            padding: 4px 10px;
+            padding: 3px 10px;
             border-radius: 12px;
             font-size: 11px;
             font-weight: 600;
-            margin-left: 8px;
+            margin-left: 6px;
             display: inline-block;
+            vertical-align: middle;
         }
-        .status-up { background: #e6f4ea; color: #137333; }
-        .status-down { background: #fce8e6; color: #c5221f; }
+        .status-up { background: var(--success-bg); color: var(--success); }
+        .status-down { background: var(--danger-bg); color: var(--danger); }
 
         .actions {
             display: flex;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .actions button {
             font-size: 13px;
             padding: 8px 12px;
+            white-space: nowrap;
         }
 
         .btn-edit { background: #d97706; }
@@ -168,287 +349,189 @@
         .btn-delete { background: #dc2626; }
         .btn-delete:hover { background: #b91c1c; }
 
-        #admin-content { display: none; } /* 預設隱藏管理內容，登入後才顯示 */
-        
-        #btn-logout {
-            background: #78716c;
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-        #btn-logout:hover {
-            background: #57534e;
+        .list-empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 24px 0;
+            margin: 0;
         }
 
-        .form-title-area {
+        .list-empty.error { color: var(--danger); }
+
+        /* ===== 提示訊息 (Toast) ===== */
+        #toast-container {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            margin-bottom: 20px;
+            gap: 8px;
+            z-index: 1000;
+            pointer-events: none;
+            width: calc(100% - 32px);
+            max-width: 420px;
         }
-        .form-title-area h2 {
-            font-size: 18px;
+
+        .toast {
+            background: var(--text-main);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            animation: toastIn 0.25s ease-out;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.warn { background: var(--warning); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== 手機版 ===== */
+        @media (max-width: 640px) {
+            body { padding: 20px 16px 60px; }
+            .panel, #login-section { padding: 20px; }
+            .admin-header-bar h1 { font-size: 20px; }
+            .header-user #current-user { display: none; }
+            .form-grid { grid-template-columns: 1fr; }
+            .list-toolbar { flex-direction: column; }
+            .product-item { flex-direction: column; align-items: stretch; gap: 12px; }
+            .actions button { flex: 1; }
         }
     </style>
 </head>
 <body>
 
+    <!-- 確認登入狀態前先顯示載入中，避免已登入時登入表單閃一下 -->
+    <div id="auth-loading">載入中…</div>
+
     <!-- 登入區塊 -->
-    <section id="login-section">
+    <section id="login-section" hidden>
         <h2>🔒 熵與焙後台登入</h2>
         <form id="login-form">
             <div class="form-group">
-                <label>管理員帳號 (Email)：</label>
-                <input type="email" id="login-email" required placeholder="請輸入管理員信箱">
+                <label for="login-email">管理員帳號 (Email)</label>
+                <input type="email" id="login-email" required autocomplete="username" placeholder="請輸入管理員信箱">
             </div>
             <div class="form-group">
-                <label>密碼：</label>
-                <input type="password" id="login-password" required placeholder="請輸入密碼">
+                <label for="login-password">密碼</label>
+                <input type="password" id="login-password" required autocomplete="current-password" placeholder="請輸入密碼">
             </div>
-            <button type="submit" style="width: 100%; margin-top: 10px;">安全登入後台</button>
+            <p id="login-error" class="form-error" role="alert" hidden></p>
+            <button type="submit" id="btn-login" class="btn-block">安全登入後台</button>
         </form>
     </section>
 
-    <!-- 後台主內容區 -->
-    <div id="admin-content">
+    <!-- 後台主內容區 (登入後才顯示) -->
+    <div id="admin-content" hidden>
         <div class="admin-header-bar">
             <h1>☕ 熵與焙 後台管理</h1>
-            <button id="btn-logout">登出系統</button>
+            <div class="header-user">
+                <span id="current-user"></span>
+                <button id="btn-logout" type="button">登出系統</button>
+            </div>
+        </div>
+
+        <!-- 商品統計 -->
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">全部商品</div>
+                <div class="stat-value" id="stat-total">0</div>
+            </div>
+            <div class="stat stat-up">
+                <div class="stat-label">上架中</div>
+                <div class="stat-value" id="stat-up">0</div>
+            </div>
+            <div class="stat stat-down">
+                <div class="stat-label">已下架</div>
+                <div class="stat-value" id="stat-down">0</div>
+            </div>
         </div>
 
         <!-- 上架／編輯商品表單 -->
-        <section class="form-section">
-            <div class="form-title-area">
+        <section class="panel" id="form-section">
+            <div class="panel-title">
                 <h2 id="form-title">✨ 上架新咖啡豆</h2>
             </div>
-            <form id="product-form">
-                <input type="hidden" id="p-id">
+            <form id="product-form" novalidate>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label for="p-name">商品名稱 <span class="required">*</span></label>
+                        <input type="text" id="p-name" required maxlength="60" placeholder="例如：衣索比亞 耶加雪菲">
+                    </div>
+                    <div class="form-group">
+                        <label for="p-price">價格 (NT$) <span class="required">*</span></label>
+                        <input type="number" id="p-price" required min="0" step="1" inputmode="numeric" placeholder="例如：500">
+                    </div>
+                    <div class="form-group">
+                        <label for="p-roast">烘焙度</label>
+                        <!-- 依烘焙程度由淺到深排列 -->
+                        <select id="p-roast">
+                            <option value="無">-</option>
+                            <option value="淺焙">淺焙</option>
+                            <option value="中淺焙">中淺焙</option>
+                            <option value="中焙">中焙</option>
+                            <option value="中深焙">中深焙</option>
+                            <option value="深焙">深焙</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-origin">產地 <span class="required">*</span></label>
+                        <input type="text" id="p-origin" required list="origin-options" maxlength="40" placeholder="例如：衣索比亞">
+                        <datalist id="origin-options"></datalist>
+                        <div class="hint" id="origin-hint">可直接從清單選擇，名稱與前台「產地篩選」一致</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-process">處理方式</label>
+                        <input type="text" id="p-process" maxlength="40" placeholder="例如：水洗 / 日曬 / 厭氧發酵">
+                    </div>
+                    <div class="form-group full">
+                        <label for="p-flavor">風味敘述</label>
+                        <textarea id="p-flavor" rows="2" maxlength="200" placeholder="例如：柑橘、茉莉花香、伯爵茶感"></textarea>
+                        <div class="tag-preview" id="flavor-preview"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-sort">前台排序</label>
+                        <input type="number" id="p-sort" min="0" max="100000" step="1" inputmode="numeric" placeholder="例如：10">
+                        <div class="hint">數字越小越前面，不填視為 0</div>
+                    </div>
+                </div>
 
-                <div class="form-group">
-                    <label>商品名稱：</label>
-                    <input type="text" id="p-name" required placeholder="例如：衣索比亞 耶加雪菲">
-                </div>
-                <div class="form-group">
-                    <label>價格 (NT$)：</label>
-                    <input type="number" id="p-price" required placeholder="例如：500">
-                </div>
-                <div class="form-group">
-                    <label>烘焙度：</label>
-                    <select id="p-roast">
-                        <option value="無">-</option>
-                        <option value="淺焙">淺焙</option>
-        				<option value="中焙">中焙</option>
-        				<option value="中淺焙">中淺焙</option>
-        				<option value="中深焙">中深焙</option>
-        				<option value="深焙">深焙</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>產地：</label>
-                    <input type="text" id="p-origin" required placeholder="例如：衣索比亞">
-                </div>
-                <div class="form-group">
-                    <label>處理方式：</label>
-                    <input type="text" id="p-process" placeholder="例如：水洗 / 日曬 / 厭氧發酵">
-                </div>
-                <div class="form-group">
-                    <label>風味敘述：</label>
-                    <textarea id="p-flavor" rows="2" placeholder="例如：柑橘、茉莉花香、伯爵茶感 (前台會自動轉為風味標籤)"></textarea>
-                </div>
-                
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit" id="btn-submit" style="flex: 2;">確認新增並上架</button>
-                    <button type="button" id="btn-cancel-edit" style="background: #a8a29e; flex: 1; display: none;">取消編輯</button>
+                <p id="form-error" class="form-error" role="alert" hidden></p>
+
+                <div class="form-actions">
+                    <button type="submit" id="btn-submit">確認新增並上架</button>
+                    <button type="button" id="btn-cancel-edit" class="btn-secondary" hidden>取消編輯</button>
                 </div>
             </form>
         </section>
 
         <!-- 商品清單管理 -->
-        <section class="list-section">
-            <h2>📋 目前全部商品清單</h2>
-            <div id="admin-product-list" style="margin-top: 15px;"></div>
+        <section class="panel">
+            <div class="panel-title">
+                <h2>📋 商品清單</h2>
+                <span class="hint" id="list-count"></span>
+            </div>
+            <div class="list-toolbar">
+                <input type="search" id="list-search" placeholder="🔍 搜尋名稱、產地、風味…">
+                <select id="list-status">
+                    <option value="">全部狀態</option>
+                    <option value="上架">只看上架中</option>
+                    <option value="下架">只看已下架</option>
+                </select>
+            </div>
+            <div id="admin-product-list"></div>
         </section>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    <div id="toast-container" aria-live="polite"></div>
 
-        // === Firebase Config (維持不變) ===
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJ7FSvcaZjwWmWAjAmt9grWhzPYCwaTNQ",
-            authDomain: "gengenhao-coffee.firebaseapp.com",
-            projectId: "gengenhao-coffee", 
-            storageBucket: "gengenhao-coffee.firebasestorage.app",
-            messagingSenderId: "236932259007",
-            appId: "1:236932259007:web:3b93dfdfd9d94447e2ba0a"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const productsRef = collection(db, "products");
-
-        const loginSection = document.getElementById('login-section');
-        const adminContent = document.getElementById('admin-content');
-        
-        const formTitle = document.getElementById('form-title');
-        const btnSubmit = document.getElementById('btn-submit');
-        const btnCancelEdit = document.getElementById('btn-cancel-edit');
-        const pIdInput = document.getElementById('p-id');
-
-        // 1. 監聽登入狀態切換 UI
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                loginSection.style.display = 'none';
-                adminContent.style.display = 'block';
-            } else {
-                loginSection.style.display = 'block';
-                adminContent.style.display = 'none';
-                resetForm();
-            }
-        });
-
-        // 2. 登入邏輯
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            signInWithEmailAndPassword(auth, email, password)
-                .catch(err => alert('登入失敗，請檢查帳號密碼：' + err.message));
-        });
-
-        // 3. 登出邏輯
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            signOut(auth);
-        });
-
-        // 4. 新增與編輯商品送出邏輯
-        document.getElementById('product-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const currentId = pIdInput.value;
-            const productData = {
-                name: document.getElementById('p-name').value,
-                price: document.getElementById('p-price').value,
-                roast_level: document.getElementById('p-roast').value,
-                origin: document.getElementById('p-origin').value,
-                process_method: document.getElementById('p-process').value || '無',
-                flavor_notes: document.getElementById('p-flavor').value || '無'
-            };
-
-            try {
-                if (currentId) {
-                    // 編輯模式
-                    await updateDoc(doc(db, "products", currentId), productData);
-                    alert('商品更新成功！');
-                    resetForm();
-                } else {
-                    // 全新新增模式
-                    productData.status = '上架';
-                    await addDoc(productsRef, productData);
-                    alert('商品新增成功！');
-                    document.getElementById('product-form').reset();
-                }
-            } catch (error) {
-                alert("儲存失敗，請檢查權限：" + error.message);
-            }
-        });
-
-        // 取消編輯按鈕點擊
-        btnCancelEdit.addEventListener('click', resetForm);
-
-        // 重設表單狀態
-        function resetForm() {
-            document.getElementById('product-form').reset();
-            pIdInput.value = '';
-            formTitle.innerText = '✨ 上架新咖啡豆';
-            btnSubmit.innerText = '確認新增並上架';
-            btnCancelEdit.style.display = 'none';
-        }
-
-        // 5. 即時載入後台清單
-        const adminListContainer = document.getElementById('admin-product-list');
-        onSnapshot(productsRef, (querySnapshot) => {
-            adminListContainer.innerHTML = '';
-            if (querySnapshot.empty) {
-                adminListContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px 0;">目前尚無商品資料</p>';
-                return;
-            }
-
-            querySnapshot.forEach((docSnap) => {
-                const item = docSnap.data();
-                const id = docSnap.id;
-                const div = document.createElement('div');
-                div.className = 'product-item';
-                const isUp = item.status === '上架';
-                
-                div.innerHTML = `
-                    <div class="product-details">
-                        <strong>${item.name}</strong> <span style="color:var(--accent-color); font-weight:600;">(NT$${item.price})</span>
-                        <span class="status-badge ${isUp ? 'status-up' : 'status-down'}">${item.status}</span>
-                        <br><small style="color:var(--text-muted);">產地: ${item.origin} | 烘焙: ${item.roast_level} | 處理: ${item.process_method} | 風味: ${item.flavor_notes}</small>
-                    </div>
-                    <div class="actions">
-                        <button class="btn-edit" 
-                            data-id="${id}"
-                            data-name="${item.name}"
-                            data-price="${item.price}"
-                            data-roast="${item.roast_level}"
-                            data-origin="${item.origin}"
-                            data-process="${item.process_method}"
-                            data-flavor="${item.flavor_notes}">✏️ 編輯</button>
-                        <button class="btn-toggle" data-id="${id}" data-status="${item.status}">${isUp ? '👇 下架' : '☝️ 上架'}</button>
-                        <button class="btn-delete" data-id="${id}">❌ 刪除</button>
-                    </div>
-                `;
-                adminListContainer.appendChild(div);
-            });
-
-            // 綁定【✏️ 編輯】按鈕事件
-            document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const t = e.target;
-                    
-                    pIdInput.value = t.getAttribute('data-id');
-                    document.getElementById('p-name').value = t.getAttribute('data-name');
-                    document.getElementById('p-price').value = t.getAttribute('data-price');
-                    document.getElementById('p-roast').value = t.getAttribute('data-roast');
-                    document.getElementById('p-origin').value = t.getAttribute('data-origin');
-                    
-                    const process = t.getAttribute('data-process');
-                    document.getElementById('p-process').value = process === '無' ? '' : process;
-                    
-                    const flavor = t.getAttribute('data-flavor');
-                    document.getElementById('p-flavor').value = flavor === '無' ? '' : flavor;
-
-                    formTitle.innerText = '✏️ 正在修改：' + t.getAttribute('data-name');
-                    btnSubmit.innerText = '💾 儲存修改';
-                    btnCancelEdit.style.display = 'inline-block';
-
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-            });
-
-            // 綁定【上下架】按鈕事件
-            document.querySelectorAll('.btn-toggle').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = e.target.getAttribute('data-id');
-                    const nextStatus = e.target.getAttribute('data-status') === '上架' ? '下架' : '上架';
-                    await updateDoc(doc(db, "products", id), { status: nextStatus });
-                });
-            });
-
-            // 綁定【❌ 刪除】按鈕事件
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = e.target.getAttribute('data-id');
-                    if(confirm('確定要永久刪除這個商品嗎？')) {
-                        await deleteDoc(doc(db, "products", id));
-                    }
-                });
-            });
-        });
-    </script>
+    <script type="module" src="admin.js"></script>
 </body>
 </html>

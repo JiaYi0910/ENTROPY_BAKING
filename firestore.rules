@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// 熵與焙 Firestore 安全規則
+// 用法：Firebase 主控台 → Firestore Database → 規則 → 把這整份內容貼上 → 發布
+// ⚠ 在主控台貼上後，再把下面兩個「請換成…」改成兩位管理員登入後台用的信箱
+//   （要跟 Firebase 主控台 → Authentication → 使用者 裡的信箱一模一樣）
+// ⚠ 這個 GitHub 專案是公開的，真正的信箱只填在 Firebase 主控台，不要改進這個檔案
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 只有名單內的信箱能修改資料；別人就算自己註冊帳號也改不了
+    // 要增減管理員就在清單裡加減，信箱之間用逗號隔開
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email in ['請換成第一位管理員信箱', '請換成第二位管理員信箱'];
+    }
+
+    // 寫入的資料至少要有商品名稱，狀態只能是「上架」或「下架」
+    function isValidProduct(data) {
+      return data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 60
+        && data.status in ['上架', '下架'];
+    }
+
+    match /products/{productId} {
+      // 客人只能讀到上架中的商品；下架的只有管理員看得到
+      allow read: if resource.data.status == '上架' || isAdmin();
+      allow create, update: if isAdmin() && isValidProduct(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // 沒有寫到的其他資料，一律不開放讀寫
+  }
+}
