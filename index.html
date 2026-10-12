@@ -48,11 +48,18 @@
 		<nav class="top-nav" aria-label="主選單">
 			<div class="top-nav-inner">
 				<a href="#top" class="nav-brand">熵與焙<span>ENTROPY & BAKING</span></a>
-				<div class="nav-links">
-					<a href="#notice">公告</a>
-					<a href="#vip">儲值方案</a>
-					<a href="#menu">豆單</a>
-					<a href="#store">門市資訊</a>
+				<div class="nav-right">
+					<div class="nav-links">
+						<a href="#notice">公告</a>
+						<a href="#vip">儲值<span class="nav-long">方案</span></a>
+						<a href="#menu">豆單</a>
+						<a href="#store">門市<span class="nav-long">資訊</span></a>
+					</div>
+					<!-- 購物車：數字是目前購物車裡的包數 -->
+					<button type="button" class="cart-button" id="cart-button" aria-label="購物車">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 7V6a3 3 0 0 1 6 0v1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+						<span class="cart-badge" id="cart-count" hidden>0</span>
+					</button>
 				</div>
 			</div>
 		</nav>
@@ -70,6 +77,7 @@
 						<a href="https://line.me/R/ti/p/@245rbror" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">LINE 諮詢</a>
 					</div>
 					<p class="hero-meta">📍 新竹縣湖口鄉　·　🕙 10:00 - 20:00（例假日公休）</p>
+					<a href="#cafe" class="hero-cafe-link">🍰 店內甜點・咖啡飲品點餐（自取／外送）→</a>
 				</div>
 				<div class="hero-visual">
 					<img src="brand-logo.jpg" alt="熵與焙品牌標誌：探索平衡・烘焙美好" width="960" height="758">
@@ -96,20 +104,21 @@
 					</button>
 					<div class="card-box-body" id="notice-body" style="max-height: 800px;">
 						<div class="notice-grid">
+							<!-- 數字標上 data-setting 的部分，會依後台「商店設定」自動更新 -->
 							<div class="notice-item">
 								<div class="notice-icon" aria-hidden="true">🛒</div>
-								<h3>下單與客製說明</h3>
-								<p>本網站提供精選豆單與風味瀏覽，<strong>請透過指定連結進行下單</strong>。</p>
+								<h3>如何訂購</h3>
+								<p>在豆單選好咖啡豆<strong>加入購物車</strong>，填寫取貨資料後送出訂單。<strong>先轉帳付款、確認後出貨</strong>。價格依市場行情與生豆成本<strong>不定期調整</strong>，以下單時為準。</p>
 							</div>
 							<div class="notice-item">
 								<div class="notice-icon" aria-hidden="true">☕</div>
-								<h3>咖啡包裝與耗材</h3>
-								<p>咖啡以 <strong>1 磅</strong> 為單位販售，約可製作 <strong>40 包濾掛或浸萃包</strong>，耗材費 <strong>200 元/磅</strong>。</p>
+								<h3>加工與耗材</h3>
+								<p>可選<strong>原豆、研磨、浸萃包、濾掛包</strong>，份量有 1 磅與半磅。1 磅約可製作 <strong>40 包</strong>；浸萃包、濾掛包耗材費 <strong>1 磅 <span data-setting="fee_1lb">200</span> 元、半磅 <span data-setting="fee_half">100</span> 元</strong>。</p>
 							</div>
 							<div class="notice-item">
-								<div class="notice-icon" aria-hidden="true">⚠️</div>
-								<h3>價格調整提醒</h3>
-								<p>本店咖啡價格將依照市場行情與生豆成本<strong>不定期調整</strong>，下單前請以最新公告為主。</p>
+								<div class="notice-icon" aria-hidden="true">🚚</div>
+								<h3>取貨與運費</h3>
+								<p>門市自取免運；<strong>全家店到店 <span data-setting="shipping_cvs">60</span> 元</strong>、<strong>宅配 <span data-setting="shipping_home">170</span> 元</strong>，滿 <strong><span data-setting="free_shipping_threshold">3,000</span> 元免運</strong>。</p>
 							</div>
 						</div>
 					</div>
@@ -134,7 +143,8 @@
 					</button>
 					<div class="card-box-body" id="vip-body" style="max-height: 800px;">
 						<div class="vip-content">
-							<div class="vip-grid">
+							<!-- 方案卡片由 JS 依 pricing.js 的 TOPUP_PLANS 產生，這裡是程式載入前的預設內容 -->
+							<div class="vip-grid" id="vip-plans">
 								<div class="vip-card">
 									<div class="vip-amount">儲值 NT$ 5,000</div>
 									<div class="vip-bonus">加贈 <span>NT$ 500</span></div>
@@ -147,7 +157,7 @@
 									<div class="vip-desc">總共獲得 $11,000 額度</div>
 								</div>
 							</div>
-							<p class="vip-note">※ 儲值金額須使用完畢，恕不退費。詳情可洽 LINE 客服。</p>
+							<p class="vip-note">※ 儲值金額須使用完畢，恕不退費；儲值已加贈儲值金，運費不另外補貼。詳情可洽 LINE 客服。</p>
 						</div>
 					</div>
 				</div>
@@ -176,6 +186,19 @@
 
 				<div class="product-grid" id="coffee-container">
 					<!-- 咖啡豆商品卡由 JS 動態插入 -->
+				</div>
+			</section>
+
+			<!-- 店內甜點、咖啡飲品點餐（另一個點餐系統，跟咖啡豆訂購分開） -->
+			<section class="content-section" id="cafe">
+				<div class="cafe-card">
+					<div class="cafe-icon" aria-hidden="true">🍰</div>
+					<div class="cafe-text">
+						<p class="section-eyebrow">CAFÉ & DESSERT</p>
+						<h2>店內甜點・咖啡飲品</h2>
+						<p>想吃現場的甜點、喝杯咖啡？線上點餐，可選擇<strong>門市自取</strong>或<strong>外送</strong>。</p>
+					</div>
+					<a href="https://www.freeshops.co/cs/94gev4b5" target="_blank" rel="noopener noreferrer" class="btn btn-primary">前往點餐 ↗</a>
 				</div>
 			</section>
 
@@ -229,6 +252,7 @@
 			<div class="footer-brand">熵與焙<span>ENTROPY & BAKING</span></div>
 			<nav class="footer-links" aria-label="頁尾連結">
 				<a href="#menu">豆單</a>
+				<a href="#cafe">甜點點餐</a>
 				<a href="#store">門市資訊</a>
 				<a href="https://line.me/R/ti/p/@245rbror" target="_blank" rel="noopener noreferrer">LINE 官方帳號</a>
 				<a href="privacy.html">隱私權政策</a>
@@ -236,6 +260,198 @@
 			</nav>
 			<p class="footer-copy">© 熵與焙 ENTROPY & BAKING 版權所有 · 本網站使用 Cookie，詳情請見隱私權政策</p>
 		</footer>
+
+<!-- 加入購物車視窗：選加工方式、份量、數量 -->
+		<dialog id="product-dialog" class="sheet" aria-labelledby="pd-title">
+			<form class="sheet-inner" id="product-dialog-form">
+				<div class="sheet-head">
+					<div>
+						<p class="sheet-eyebrow" id="pd-origin"></p>
+						<h3 id="pd-title" tabindex="-1"></h3>
+					</div>
+					<button type="button" class="sheet-close" data-close aria-label="關閉">×</button>
+				</div>
+				<fieldset class="option-group">
+					<legend>加工方式</legend>
+					<div class="option-chips" id="pd-process"></div>
+				</fieldset>
+				<fieldset class="option-group">
+					<legend>份量</legend>
+					<div class="option-chips two" id="pd-size"></div>
+				</fieldset>
+				<div class="option-group">
+					<span class="option-legend">數量</span>
+					<div class="qty-stepper">
+						<button type="button" data-qty="-1" aria-label="減少">−</button>
+						<span id="pd-qty">1</span>
+						<button type="button" data-qty="1" aria-label="增加">＋</button>
+					</div>
+				</div>
+				<div class="sheet-foot">
+					<div class="pd-price">
+						<span>小計</span>
+						<strong id="pd-total"></strong>
+						<small id="pd-breakdown"></small>
+					</div>
+					<button type="submit" class="btn btn-primary">加入購物車</button>
+				</div>
+			</form>
+		</dialog>
+
+		<!-- 購物車與結帳：① 購物車 → ② 填寫資料 → ③ 訂單完成 -->
+		<dialog id="cart-dialog" class="sheet sheet-cart" aria-labelledby="cart-title">
+			<div class="sheet-inner">
+				<div class="sheet-head">
+					<h3 id="cart-title" tabindex="-1">購物車</h3>
+					<button type="button" class="sheet-close" data-close aria-label="關閉">×</button>
+				</div>
+				<ol class="checkout-steps" aria-label="購物流程">
+					<li data-step-indicator="cart" class="is-active"><span>1</span>購物車</li>
+					<li data-step-indicator="checkout"><span>2</span>填寫資料</li>
+					<li data-step-indicator="done"><span>3</span>完成訂單</li>
+				</ol>
+
+				<!-- ① 購物車 -->
+				<section data-step="cart">
+					<p class="cart-notice" id="cart-notice" hidden></p>
+					<ul class="cart-items" id="cart-items"></ul>
+					<div class="cart-empty" id="cart-empty">
+						<p>購物車是空的，先到豆單挑選喜歡的咖啡豆吧！</p>
+						<a href="#menu" class="btn btn-ghost" data-close>去逛豆單</a>
+					</div>
+					<div class="cart-footer" id="cart-footer">
+						<div class="cart-subtotal"><span>商品小計</span><strong id="cart-subtotal"></strong></div>
+						<p class="free-ship-hint" id="cart-free-hint"></p>
+						<div class="cart-actions">
+							<button type="button" class="btn btn-ghost" data-close>繼續購物</button>
+							<button type="button" class="btn btn-primary" id="btn-go-checkout">前往結帳 →</button>
+						</div>
+					</div>
+				</section>
+
+				<!-- ② 填寫資料 -->
+				<form data-step="checkout" id="checkout-form" novalidate hidden>
+					<fieldset class="option-group">
+						<legend>取貨方式 <small id="free-ship-rule"></small></legend>
+						<div class="option-chips three">
+							<label class="option-chip"><input type="radio" name="delivery" value="pickup" checked><span class="option-label">門市自取</span><span class="option-sub" data-delivery-fee="pickup">免運費</span></label>
+							<label class="option-chip"><input type="radio" name="delivery" value="cvs"><span class="option-label">全家店到店</span><span class="option-sub" data-delivery-fee="cvs"></span></label>
+							<label class="option-chip"><input type="radio" name="delivery" value="home"><span class="option-label">宅配</span><span class="option-sub" data-delivery-fee="home"></span></label>
+						</div>
+						<p class="free-ship-hint" id="free-ship-hint" hidden></p>
+					</fieldset>
+
+					<div class="checkout-fields">
+						<label>訂購人姓名 <span class="required">*</span>
+							<input type="text" name="customer_name" autocomplete="name" maxlength="30">
+						</label>
+						<label>聯絡電話 <span class="required">*</span>
+							<input type="tel" name="customer_phone" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="例如：0912345678">
+						</label>
+						<label class="full" id="field-store" hidden>全家門市名稱或店號 <span class="required">*</span>
+							<input type="text" name="cvs_store" maxlength="40" placeholder="例如：全家湖口光復店">
+						</label>
+						<label class="full" id="field-address" hidden>宅配收件地址 <span class="required">*</span>
+							<input type="text" name="home_address" autocomplete="street-address" maxlength="100">
+						</label>
+						<label class="full">備註
+							<textarea name="order_note" rows="2" maxlength="200" placeholder="例如：使用儲值金扣款、希望的研磨粗細…"></textarea>
+						</label>
+					</div>
+
+					<fieldset class="option-group">
+						<legend>付款方式</legend>
+						<div class="option-chips">
+							<label class="option-chip"><input type="radio" name="payment_method" value="transfer" checked><span class="option-label">銀行轉帳</span><span class="option-sub">先付款後出貨</span></label>
+							<label class="option-chip"><input type="radio" name="payment_method" value="stored_value"><span class="option-label">儲值金扣款</span><span class="option-sub">VIP 儲值會員</span></label>
+						</div>
+						<p class="payment-brief" id="payment-brief"></p>
+					</fieldset>
+
+					<dl class="cart-summary">
+						<div><dt>咖啡豆</dt><dd id="sum-goods"></dd></div>
+						<div id="row-fees"><dt>加工耗材</dt><dd id="sum-fees"></dd></div>
+						<div><dt>運費</dt><dd id="sum-shipping"></dd></div>
+						<div class="sum-total"><dt>應付金額</dt><dd id="sum-total"></dd></div>
+					</dl>
+
+					<p class="form-error" id="checkout-error" role="alert" hidden></p>
+					<button type="button" class="btn btn-line btn-block" id="btn-line-fallback" hidden>改用 LINE 傳送訂單</button>
+					<div class="cart-actions">
+						<button type="button" class="btn btn-ghost" id="btn-back-cart">← 返回購物車</button>
+						<button type="submit" class="btn btn-primary" id="btn-submit-order">確認送出訂單</button>
+					</div>
+				</form>
+
+				<!-- ③ 訂單完成 -->
+				<section data-step="done" hidden>
+					<div class="done-head">
+						<div class="done-icon" aria-hidden="true">✓</div>
+						<p id="done-title"></p>
+						<div class="done-no">訂單編號 <strong id="done-order-no"></strong> <button type="button" class="link-btn" data-copy-order-no>複製</button></div>
+					</div>
+
+					<!-- 付款說明：轉帳顯示帳號，儲值金扣款顯示扣款說明（由 JS 填入） -->
+					<div class="payment-box" id="done-payment"></div>
+
+					<div class="cart-actions">
+						<a class="btn btn-line" id="btn-report-payment" href="#" target="_blank" rel="noopener noreferrer">用 LINE 回報匯款</a>
+						<button type="button" class="btn btn-ghost" id="btn-copy-order">複製訂單內容</button>
+					</div>
+					<button type="button" class="btn btn-primary btn-block" data-close>完成</button>
+				</section>
+			</div>
+		</dialog>
+
+		<!-- 申請儲值：選方案、填資料 → 送出後顯示轉帳帳號 -->
+		<dialog id="topup-dialog" class="sheet" aria-labelledby="topup-title">
+			<div class="sheet-inner">
+				<div class="sheet-head">
+					<div>
+						<p class="sheet-eyebrow">VIP 專屬儲值方案</p>
+						<h3 id="topup-title" tabindex="-1">申請儲值</h3>
+					</div>
+					<button type="button" class="sheet-close" data-close aria-label="關閉">×</button>
+				</div>
+
+				<form id="topup-form" data-topup-step="form" novalidate>
+					<fieldset class="option-group">
+						<legend>儲值方案</legend>
+						<div class="option-chips" id="topup-plans"></div>
+					</fieldset>
+					<div class="checkout-fields">
+						<label>姓名 <span class="required">*</span>
+							<input type="text" name="customer_name" autocomplete="name" maxlength="30">
+						</label>
+						<label>聯絡電話 <span class="required">*</span>
+							<input type="tel" name="customer_phone" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="例如：0912345678">
+						</label>
+						<label class="full">備註
+							<textarea name="order_note" rows="2" maxlength="200"></textarea>
+						</label>
+					</div>
+					<p class="payment-brief">📱 <strong>聯絡電話就是您的儲值會員帳號</strong>，之後用儲值金下單請填同一支電話。送出後會顯示轉帳帳號，店家確認入帳後即為您加值。</p>
+					<p class="form-error" id="topup-error" role="alert" hidden></p>
+					<button type="button" class="btn btn-line btn-block" id="btn-topup-line" hidden>改用 LINE 申請儲值</button>
+					<button type="submit" class="btn btn-primary btn-block" id="btn-submit-topup">送出儲值申請</button>
+				</form>
+
+				<section data-topup-step="done" hidden>
+					<div class="done-head">
+						<div class="done-icon" aria-hidden="true">✓</div>
+						<p>儲值申請已送出！</p>
+						<div class="done-no">申請編號 <strong id="topup-order-no"></strong> <button type="button" class="link-btn" data-copy-order-no>複製</button></div>
+					</div>
+					<div class="payment-box" id="topup-payment"></div>
+					<div class="cart-actions">
+						<a class="btn btn-line" id="btn-topup-report" href="#" target="_blank" rel="noopener noreferrer">用 LINE 回報匯款</a>
+					</div>
+					<button type="button" class="btn btn-primary btn-block" data-close>完成</button>
+				</section>
+			</div>
+		</dialog>
+
+		<div class="site-toast" id="site-toast" role="status" aria-live="polite"></div>
 	</div>
 
 	<script type="module" src="script.js"></script>

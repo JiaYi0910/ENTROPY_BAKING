@@ -114,7 +114,7 @@
         /* ===== 統計數字 ===== */
         .stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 24px;
         }
@@ -139,6 +139,275 @@
 
         .stat-up .stat-value { color: var(--success); }
         .stat-down .stat-value { color: var(--danger); }
+        .stat-alert .stat-value { color: #c2410c; }
+        .stat-ship .stat-value { color: #1d4ed8; }
+
+        /* 訂單統計可以點，點了直接篩選該狀態的訂單 */
+        a.stat {
+            color: inherit;
+            text-decoration: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        a.stat:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 12px rgba(74, 59, 50, 0.08);
+        }
+
+        /* ===== 訂單管理 ===== */
+        .order-item {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: var(--card-bg);
+            transition: box-shadow 0.2s;
+        }
+
+        .order-item[open] {
+            box-shadow: 0 6px 18px rgba(74, 59, 50, 0.08);
+        }
+
+        .order-item.is-new {
+            animation: newOrder 1.2s ease 3;
+        }
+
+        @keyframes newOrder {
+            0%, 100% { background: var(--card-bg); }
+            50% { background: #fff4e5; }
+        }
+
+        .order-item summary {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            align-items: center;
+            gap: 4px 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .order-item summary::-webkit-details-marker { display: none; }
+
+        .order-no {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .order-meta {
+            grid-column: 1 / 2;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .order-total {
+            grid-row: 1 / 3;
+            grid-column: 2;
+            font-family: var(--font-serif);
+            font-size: 18px;
+        }
+
+        .order-item summary .status-badge {
+            grid-row: 1 / 3;
+            grid-column: 3;
+            margin-left: 0;
+        }
+
+        /* 訂單狀態顏色 */
+        .status-待付款 { background: #fff1e0; color: #c2410c; }
+        .status-已付款 { background: #e0ecff; color: #1d4ed8; }
+        .status-已出貨 { background: #efe7ff; color: #6d28d9; }
+        .status-已完成 { background: var(--success-bg); color: var(--success); }
+        .status-已取消 { background: #eeeeee; color: #6b6b6b; }
+
+        .order-body {
+            padding: 0 16px 16px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .order-section-title {
+            margin: 14px 0 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .order-lines {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .order-lines td {
+            padding: 6px 0;
+            border-bottom: 1px solid #f1ece4;
+            vertical-align: top;
+        }
+
+        .order-lines td:last-child {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .order-lines small {
+            display: block;
+            color: var(--text-muted);
+        }
+
+        .order-amounts div,
+        .order-customer div {
+            display: grid;
+            grid-template-columns: 90px 1fr;
+            gap: 8px;
+            padding: 3px 0;
+            font-size: 14px;
+        }
+
+        .order-amounts dt,
+        .order-customer dt {
+            color: var(--text-muted);
+        }
+
+        .order-amounts .amount-total dd {
+            font-weight: 700;
+        }
+
+        .order-customer a {
+            color: var(--text-main);
+        }
+
+        .amount-warning {
+            margin: 8px 0 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #fff7e6;
+            font-size: 13px;
+            color: #b45309;
+        }
+
+        .order-manage {
+            margin-top: 14px;
+            padding: 14px;
+            border-radius: 10px;
+            background: var(--soft-bg);
+        }
+
+        .order-manage .form-grid {
+            gap: 0 12px;
+        }
+
+        .order-manage .form-group {
+            margin-bottom: 10px;
+        }
+
+        .order-manage-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .order-manage-actions button {
+            font-size: 13px;
+            padding: 8px 14px;
+        }
+
+        /* ===== 儲值相關 ===== */
+        .stored-value-box {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border: 1px solid #e9d8f5;
+            border-radius: 10px;
+            background: #faf5ff;
+            font-size: 14px;
+        }
+
+        .stored-value-box p { margin: 0 0 8px; }
+        .stored-value-box p:last-child { margin-bottom: 0; }
+        .stored-value-box .done { color: var(--success); font-weight: 600; }
+
+        .btn-stored-value { background: #7c3aed; font-size: 14px; padding: 8px 14px; }
+        .btn-stored-value:hover { background: #6d28d9; }
+
+        .type-badge {
+            display: inline-block;
+            margin-right: 6px;
+            padding: 1px 8px;
+            border-radius: 999px;
+            background: #f3e8ff;
+            color: #7c3aed;
+            font-size: 11px;
+            font-weight: 600;
+            vertical-align: middle;
+        }
+
+        .member-adjust {
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border: 1px dashed var(--border-color);
+            border-radius: 10px;
+        }
+
+        .member-adjust summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--accent-hover);
+        }
+
+        .member-adjust form { margin-top: 14px; }
+
+        .member-item {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .member-item summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 4px;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .member-item summary::-webkit-details-marker { display: none; }
+
+        .member-balance {
+            font-family: var(--font-serif);
+            font-size: 18px;
+            font-weight: 700;
+            color: #7c3aed;
+        }
+
+        .member-balance.zero { color: var(--text-muted); }
+
+        .tx-list {
+            margin: 0 0 12px;
+            padding: 0;
+            list-style: none;
+            font-size: 13px;
+        }
+
+        .tx-list li {
+            display: grid;
+            grid-template-columns: 90px 1fr auto auto;
+            gap: 10px;
+            padding: 6px 4px;
+            border-top: 1px solid #f1ece4;
+        }
+
+        .tx-plus { color: var(--success); font-weight: 600; }
+        .tx-minus { color: var(--danger); font-weight: 600; }
+
+        /* ===== 商店設定 ===== */
+        .settings-heading {
+            margin: 8px 0 12px;
+            font-size: 15px;
+            font-family: var(--font-serif);
+        }
+
+        .form-grid.three {
+            grid-template-columns: repeat(3, 1fr);
+        }
 
         /* ===== 表單 ===== */
         .form-grid {
@@ -434,8 +703,13 @@
             .panel, #login-section { padding: 20px; }
             .admin-header-bar h1 { font-size: 20px; }
             .header-user #current-user { display: none; }
-            .form-grid { grid-template-columns: 1fr; }
+            .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
             .list-toolbar { flex-direction: column; }
+            .order-item summary { grid-template-columns: 1fr auto; }
+            .order-total { grid-row: auto; grid-column: 2; }
+            .order-item summary .status-badge { grid-row: 1; grid-column: 2; justify-self: end; }
+            .order-meta { grid-column: 1 / -1; }
             .product-item { flex-direction: column; align-items: stretch; gap: 12px; }
             .actions button { flex: 1; }
         }
@@ -476,21 +750,93 @@
             </div>
         </div>
 
-        <!-- 商品統計 -->
+        <!-- 訂單與商品統計 -->
         <div class="stats">
-            <div class="stat">
-                <div class="stat-label">全部商品</div>
-                <div class="stat-value" id="stat-total">0</div>
-            </div>
+            <a class="stat stat-alert" href="#orders-section" data-filter-status="待付款">
+                <div class="stat-label">待付款訂單</div>
+                <div class="stat-value" id="stat-unpaid">0</div>
+            </a>
+            <a class="stat stat-ship" href="#orders-section" data-filter-status="已付款">
+                <div class="stat-label">待出貨訂單</div>
+                <div class="stat-value" id="stat-to-ship">0</div>
+            </a>
             <div class="stat stat-up">
-                <div class="stat-label">上架中</div>
+                <div class="stat-label">上架中商品</div>
                 <div class="stat-value" id="stat-up">0</div>
             </div>
             <div class="stat stat-down">
-                <div class="stat-label">已下架</div>
+                <div class="stat-label">已下架商品</div>
                 <div class="stat-value" id="stat-down">0</div>
             </div>
         </div>
+
+        <!-- 訂單管理：客人在前台送出的訂單 -->
+        <section class="panel" id="orders-section">
+            <div class="panel-title">
+                <h2>📦 訂單管理</h2>
+                <div class="header-user">
+                    <span class="hint" id="order-count"></span>
+                    <button type="button" id="btn-enable-notify" class="btn-outline-link">🔔 開啟桌面通知</button>
+                </div>
+            </div>
+            <div class="list-toolbar">
+                <input type="search" id="order-search" placeholder="🔍 搜尋訂單編號、姓名、電話…">
+                <select id="order-status-filter">
+                    <option value="">全部訂單</option>
+                    <option value="待付款">待付款</option>
+                    <option value="已付款">已付款（待出貨）</option>
+                    <option value="已出貨">已出貨</option>
+                    <option value="已完成">已完成</option>
+                    <option value="已取消">已取消</option>
+                    <option value="topup">只看儲值申請</option>
+                </select>
+            </div>
+            <div id="order-list"></div>
+        </section>
+
+        <!-- 儲值會員：以電話辨識，記錄每位客人的儲值金餘額與每一筆加值／扣款 -->
+        <section class="panel" id="members-section">
+            <div class="panel-title">
+                <h2>👛 儲值會員</h2>
+                <span class="hint" id="member-count"></span>
+            </div>
+            <details class="member-adjust">
+                <summary>＋ 手動加值／扣款（例如客人在店裡直接儲值）</summary>
+                <form id="member-adjust-form" novalidate>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="m-phone">電話 <span class="required">*</span></label>
+                            <input type="tel" id="m-phone" name="phone" maxlength="20" inputmode="tel" placeholder="例如：0912345678">
+                        </div>
+                        <div class="form-group">
+                            <label for="m-name">姓名</label>
+                            <input type="text" id="m-name" name="name" maxlength="30" placeholder="新會員請填寫">
+                        </div>
+                        <div class="form-group">
+                            <label for="m-type">類型</label>
+                            <select id="m-type" name="type">
+                                <option value="儲值">加值（儲值）</option>
+                                <option value="扣款">扣款（消費）</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m-amount">金額 (NT$) <span class="required">*</span></label>
+                            <input type="number" id="m-amount" name="amount" min="1" step="1" inputmode="numeric" placeholder="例如：5500（含加贈）">
+                        </div>
+                        <div class="form-group full">
+                            <label for="m-note">備註</label>
+                            <input type="text" id="m-note" name="note" maxlength="100" placeholder="例如：門市儲值 5,000 加贈 500">
+                        </div>
+                    </div>
+                    <p id="member-adjust-error" class="form-error" role="alert" hidden></p>
+                    <button type="submit" id="btn-member-adjust">確認送出</button>
+                </form>
+            </details>
+            <div class="list-toolbar">
+                <input type="search" id="member-search" placeholder="🔍 搜尋姓名、電話…">
+            </div>
+            <div id="member-list"></div>
+        </section>
 
         <!-- 上架／編輯商品表單 -->
         <section class="panel" id="form-section">
@@ -504,8 +850,13 @@
                         <input type="text" id="p-name" required maxlength="60" placeholder="例如：衣索比亞 耶加雪菲">
                     </div>
                     <div class="form-group">
-                        <label for="p-price">價格 (NT$) <span class="required">*</span></label>
-                        <input type="number" id="p-price" required min="0" step="1" inputmode="numeric" placeholder="例如：500">
+                        <label for="p-price">1 磅價格 (NT$) <span class="required">*</span></label>
+                        <input type="number" id="p-price" required min="0" step="1" inputmode="numeric" placeholder="例如：1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="p-half-price">半磅價格 (NT$)</label>
+                        <input type="number" id="p-half-price" min="0" step="1" inputmode="numeric" placeholder="不填＝1 磅價格的一半">
+                        <div class="hint">不填會自動用 1 磅價格的一半</div>
                     </div>
                     <div class="form-group">
                         <label for="p-roast">烘焙度</label>
@@ -529,15 +880,15 @@
                         <label for="p-process">處理方式</label>
                         <input type="text" id="p-process" maxlength="40" placeholder="例如：水洗 / 日曬 / 厭氧發酵">
                     </div>
-                    <div class="form-group full">
-                        <label for="p-flavor">風味敘述</label>
-                        <textarea id="p-flavor" rows="2" maxlength="200" placeholder="例如：柑橘、茉莉花香、伯爵茶感"></textarea>
-                        <div class="tag-preview" id="flavor-preview"></div>
-                    </div>
                     <div class="form-group">
                         <label for="p-sort">前台排序</label>
                         <input type="number" id="p-sort" min="0" max="100000" step="1" inputmode="numeric" placeholder="例如：10">
                         <div class="hint">數字越小越前面，不填視為 0</div>
+                    </div>
+                    <div class="form-group full">
+                        <label for="p-flavor">風味敘述</label>
+                        <textarea id="p-flavor" rows="2" maxlength="200" placeholder="例如：柑橘、茉莉花香、伯爵茶感"></textarea>
+                        <div class="tag-preview" id="flavor-preview"></div>
                     </div>
                 </div>
 
@@ -565,6 +916,72 @@
                 </select>
             </div>
             <div id="admin-product-list"></div>
+        </section>
+
+        <!-- 商店設定：轉帳帳號、運費、耗材費、訂單通知（前台購物車會即時套用） -->
+        <section class="panel" id="settings-section">
+            <div class="panel-title">
+                <h2>⚙️ 商店設定</h2>
+            </div>
+            <form id="settings-form" novalidate>
+                <h3 class="settings-heading">💳 轉帳資訊（客人送出訂單後會看到）</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="s-bank-code">銀行代碼</label>
+                        <input type="text" id="s-bank-code" name="bank_code" maxlength="3" inputmode="numeric" placeholder="例如：822">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-bank-name">銀行名稱</label>
+                        <input type="text" id="s-bank-name" name="bank_name" maxlength="30" placeholder="例如：中國信託">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-bank-account">轉帳帳號</label>
+                        <input type="text" id="s-bank-account" name="bank_account" maxlength="20" inputmode="numeric" placeholder="只填數字">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-bank-holder">戶名（選填）</label>
+                        <input type="text" id="s-bank-holder" name="bank_holder" maxlength="30">
+                    </div>
+                </div>
+
+                <h3 class="settings-heading">🚚 運費與加工耗材 (NT$)</h3>
+                <div class="form-grid three">
+                    <div class="form-group">
+                        <label for="s-shipping-cvs">全家店到店運費</label>
+                        <input type="number" id="s-shipping-cvs" name="shipping_cvs" min="0" step="1" inputmode="numeric">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-shipping-home">宅配運費</label>
+                        <input type="number" id="s-shipping-home" name="shipping_home" min="0" step="1" inputmode="numeric">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-free-threshold">滿額免運門檻</label>
+                        <input type="number" id="s-free-threshold" name="free_shipping_threshold" min="0" step="1" inputmode="numeric">
+                        <div class="hint">填 0 表示不提供免運</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="s-fee-1lb">濾掛／浸萃包耗材（1 磅）</label>
+                        <input type="number" id="s-fee-1lb" name="fee_1lb" min="0" step="1" inputmode="numeric">
+                    </div>
+                    <div class="form-group">
+                        <label for="s-fee-half">濾掛／浸萃包耗材（半磅）</label>
+                        <input type="number" id="s-fee-half" name="fee_half" min="0" step="1" inputmode="numeric">
+                    </div>
+                </div>
+
+                <h3 class="settings-heading">📧 新訂單 Email 通知</h3>
+                <div class="form-group">
+                    <label for="s-notify-url">Google Apps Script 網址</label>
+                    <input type="url" id="s-notify-url" name="notify_url" maxlength="300" placeholder="https://script.google.com/macros/s/……/exec">
+                    <div class="hint">設定方式請看 GitHub 專案裡 notify 資料夾的說明；留空表示不寄 Email（後台開著時仍會跳出新訂單提示）</div>
+                </div>
+
+                <p id="settings-error" class="form-error" role="alert" hidden></p>
+                <div class="form-actions">
+                    <button type="submit" id="btn-save-settings">💾 儲存商店設定</button>
+                    <button type="button" id="btn-test-notify" class="btn-secondary">寄送測試通知</button>
+                </div>
+            </form>
         </section>
     </div>
 

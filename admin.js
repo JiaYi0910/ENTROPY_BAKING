@@ -2,6 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
+import { initShop, startShop, stopShop } from "./admin-shop.js";
+import { money, unitPrice } from "./pricing.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -37,6 +39,7 @@ const btnCancelEdit = $('btn-cancel-edit');
 const fields = {
     name: $('p-name'),
     price: $('p-price'),
+    halfPrice: $('p-half-price'),
     roast: $('p-roast'),
     origin: $('p-origin'),
     process: $('p-process'),
@@ -72,7 +75,8 @@ function showToast(message, type = 'success') {
     toast.className = `toast ${type}`;
     toast.textContent = message;
     toastContainer.appendChild(toast);
-    setTimeout(() => toast.remove(), type === 'error' ? 5000 : 2500);
+    // 新訂單等提醒（warn）停留久一點，免得管理員沒看到
+    setTimeout(() => toast.remove(), { error: 5000, warn: 8000 }[type] ?? 2500);
 }
 
 function showError(el, message) {
@@ -111,13 +115,25 @@ function dbErrorMessage(err) {
         case 'permission-denied':
             return '沒有權限，請確認目前登入的是管理員帳號';
         case 'not-found':
-            return '找不到這個商品，可能已被刪除';
+            return '找不到這筆資料，可能已被刪除';
         case 'unavailable':
             return '網路連線異常，請稍後再試';
+        case 'failed-precondition':
+            return '資料庫需要建立索引，請把錯誤畫面截圖給技術人員';
         default:
             return err.message;
     }
 }
+
+// 訂單、儲值會員、商店設定（admin-shop.js）共用的工具
+initShop({
+    db,
+    auth,
+    showToast,
+    escapeHtml,
+    dbErrorMessage,
+    getProducts: () => products
+});
 
 // ========== 1. 登入狀態：登入後才開始讀取商品，登出就停止 ==========
 onAuthStateChanged(auth, (user) => {
@@ -129,11 +145,13 @@ onAuthStateChanged(auth, (user) => {
         currentUser.textContent = user.email || '';
         loginForm.reset();
         subscribeProducts();
+        startShop();
     } else {
         if (stopProductsListener) {
             stopProductsListener();
             stopProductsListener = null;
         }
+        stopShop();
         products = new Map();
         resetForm();
         adminContent.hidden = true;
@@ -192,6 +210,8 @@ function readForm() {
     const name = fields.name.value.trim();
     const priceText = fields.price.value.trim();
     const price = Number(priceText);
+    const halfText = fields.halfPrice.value.trim();
+    const halfPrice = halfText === '' ? null : Number(halfText);
     const origin = fields.origin.value.trim();
     const sortText = fields.sort.value.trim();
     const sortOrder = sortText === '' ? 0 : Number(sortText);
@@ -199,6 +219,9 @@ function readForm() {
     if (!name) return { error: '請填寫商品名稱', field: fields.name };
     if (priceText === '' || !Number.isInteger(price) || price < 0) {
         return { error: '價格請填寫 0 以上的整數', field: fields.price };
+    }
+    if (halfPrice !== null && (!Number.isInteger(halfPrice) || halfPrice <= 0)) {
+        return { error: '半磅價格請填寫 1 以上的整數，或留空自動計算', field: fields.halfPrice };
     }
     if (!origin) return { error: '請填寫產地', field: fields.origin };
     if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 100000) {
@@ -209,6 +232,7 @@ function readForm() {
         data: {
             name,
             price, // 存成數字，之後才能正確排序與計算
+            half_price: halfPrice, // null 代表前台自動用 1 磅價格的一半
             roast_level: fields.roast.value,
             origin,
             process_method: fields.process.value.trim() || EMPTY_VALUE,
@@ -266,6 +290,7 @@ function startEdit(id) {
     editingId = id;
     fields.name.value = item.name || '';
     fields.price.value = item.price ?? '';
+    fields.halfPrice.value = Number(item.half_price) > 0 ? item.half_price : '';
     setSelectValue(fields.roast, item.roast_level || EMPTY_VALUE);
     fields.origin.value = item.origin || '';
     fields.process.value = blankIfEmpty(item.process_method);
@@ -353,7 +378,6 @@ listContainer.addEventListener('click', (e) => {
 function renderStats() {
     let up = 0;
     products.forEach((p) => { if (p.status === STATUS_UP) up++; });
-    $('stat-total').textContent = products.size;
     $('stat-up').textContent = up;
     $('stat-down').textContent = products.size - up;
 }
@@ -387,8 +411,10 @@ function renderList() {
 
 function renderRow(id, p) {
     const isUp = p.status === STATUS_UP;
+    const half = unitPrice(p, '半磅');
     const meta = [['產地', p.origin], ['烘焙', p.roast_level], ['處理', p.process_method], ['風味', p.flavor_notes]]
         .map(([label, value]) => `${label}：${escapeHtml(value || EMPTY_VALUE)}`)
+        .concat(`半磅：${half == null ? '—' : money(half)}${Number(p.half_price) > 0 ? '' : '（自動）'}`)
         .concat(`排序：${escapeHtml(Number(p.sort_order) || 0)}`)
         .join(' ｜ ');
 

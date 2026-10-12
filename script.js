@@ -1,9 +1,9 @@
+import { initOrder, openProductDialog, syncProducts, setShopSettings, setOrderSubmitter, escapeHtml } from "./order.js";
+import { money, unitPrice } from "./pricing.js";
+
 // 全域變數：存放從 Firebase 抓下來的商品
 let allProducts = [];
 let productsLoaded = false;
-
-// 💡 指定的專屬訂購連結
-const MOM_ORDER_URL = "http://www.freeshops.co/cs/94gev4b5";
 
 // 烘焙度由淺到深；color 用在刻度點與篩選按鈕的小圓點
 const ROAST_LEVELS = [
@@ -16,13 +16,6 @@ const ROAST_LEVELS = [
 
 // 產地篩選的基本選項；商品產地包含這些字就算符合（例如配豆也能篩到）
 const BASE_ORIGINS = ['衣索比亞', '哥倫比亞', '瓜地馬拉', '巴拿馬', '墨西哥', '盧安達', '印尼', '臺灣'];
-
-// 商品資料放進 innerHTML 前先跳脫，避免特殊符號弄壞畫面
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[ch]));
-}
 
 // 「無」、「-」或空白都視為沒填
 function hasValue(value) {
@@ -114,7 +107,7 @@ function checkBusinessStatus() {
 // 用動態載入：就算客人的網路連不到 Firebase，只有豆單顯示失敗，按鈕、開場動畫等功能照常運作
 async function loadProducts() {
   try {
-    const [{ initializeApp }, { getFirestore, collection, query, where, onSnapshot }, { firebaseConfig }] = await Promise.all([
+    const [{ initializeApp }, { getFirestore, collection, doc, query, where, onSnapshot, addDoc, serverTimestamp }, { firebaseConfig }] = await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"),
       import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"),
       import("./firebase-config.js")
@@ -124,16 +117,25 @@ async function loadProducts() {
 
     onSnapshot(q, (querySnapshot) => {
       allProducts = [];
-      querySnapshot.forEach((doc) => {
-        allProducts.push({ id: doc.id, ...doc.data() });
+      querySnapshot.forEach((docSnap) => {
+        allProducts.push({ id: docSnap.id, ...docSnap.data() });
       });
       // 依後台設定的「前台排序」由小到大排列；沒設定的視為 0，同數字時維持原本順序
       allProducts.sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
       productsLoaded = true;
+      syncProducts(allProducts);
       renderOriginOptions();
       renderRoastChips();
       filterProducts();
     }, showLoadError);
+
+    // 後台「商店設定」：轉帳帳號、運費、耗材費；讀不到時購物車會用預設值
+    onSnapshot(doc(db, "settings", "shop"),
+      (snap) => setShopSettings(snap.exists() ? snap.data() : {}),
+      (error) => console.warn('商店設定讀取失敗，使用預設值', error));
+
+    // 客人送出的訂單存到 orders，後台「訂單管理」可以看到
+    setOrderSubmitter((order) => addDoc(collection(db, "orders"), { ...order, created_at: serverTimestamp() }));
   } catch (error) {
     showLoadError(error);
   }
@@ -160,6 +162,17 @@ if (coffeeContainer) {
 if (searchInput) searchInput.addEventListener('input', filterProducts);
 if (filterOrigin) filterOrigin.addEventListener('change', filterProducts);
 
+// 商品卡上的「加入購物車」：打開選加工方式、份量的視窗
+if (coffeeContainer) {
+  coffeeContainer.addEventListener('click', (e) => {
+    const button = e.target.closest('.btn-add-cart[data-id]');
+    if (!button) return;
+    const product = allProducts.find(p => p.id === button.dataset.id);
+    if (product) openProductDialog(product);
+  });
+}
+
+initOrder();
 loadProducts();
 
 // 產地選單依目前上架的商品自動產生，新產地不用改程式也篩得到
@@ -252,9 +265,24 @@ function renderRoastScale(roastLevel) {
   `;
 }
 
-function formatPrice(price) {
-  const n = Number(price);
-  return Number.isFinite(n) ? n.toLocaleString('zh-TW') : escapeHtml(price);
+// 價格區：1 磅價格 + 半磅價格 + 加入購物車；價格不正確的商品改成請客人用 LINE 詢問
+function renderPriceFooter(product) {
+  const full = unitPrice(product, '1磅');
+  if (full == null) {
+    return `
+      <div class="product-footer">
+        <div class="product-price">價格請洽詢</div>
+        <a href="https://line.me/R/ti/p/%40245rbror" target="_blank" rel="noopener noreferrer" class="btn-add-cart">LINE 詢問</a>
+      </div>`;
+  }
+  return `
+    <div class="product-footer">
+      <div class="price-block">
+        <div class="product-price">${money(full)}<span>/ 磅</span></div>
+        <div class="product-half-price">半磅 ${money(unitPrice(product, '半磅'))}</div>
+      </div>
+      <button type="button" class="btn-add-cart" data-id="${escapeHtml(product.id)}">加入購物車</button>
+    </div>`;
 }
 
 function renderProducts(products) {
@@ -284,10 +312,7 @@ function renderProducts(products) {
         <h3 class="product-title">${escapeHtml(product.name)}</h3>
         ${renderRoastScale(product.roast_level)}
         ${tags ? `<div class="flavor-tag-container">${tags}</div>` : ''}
-        <div class="product-footer">
-          <div class="product-price">NT$${formatPrice(product.price)}<span>/ 磅</span></div>
-          <a href="${MOM_ORDER_URL}" target="_blank" rel="noopener noreferrer" class="btn-order">下單 →</a>
-        </div>
+        ${renderPriceFooter(product)}
       </article>
     `;
   }).join('');

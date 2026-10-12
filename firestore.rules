@@ -15,7 +15,7 @@ service cloud.firestore {
         && request.auth.token.email in ['請換成第一位管理員信箱', '請換成第二位管理員信箱'];
     }
 
-    // 寫入的資料至少要有商品名稱，狀態只能是「上架」或「下架」
+    // 寫入的商品至少要有商品名稱，狀態只能是「上架」或「下架」
     function isValidProduct(data) {
       return data.name is string
         && data.name.size() > 0
@@ -23,11 +23,63 @@ service cloud.firestore {
         && data.status in ['上架', '下架'];
     }
 
+    // 客人送出的訂單／儲值申請：檢查欄位與長度，避免被塞入奇怪或過大的資料
+    function isValidNewOrder(d) {
+      return d.status == '待付款'
+        && d.created_at == request.time
+        && d.order_no is string && d.order_no.size() <= 20
+        && d.customer is map
+        && d.customer.keys().hasOnly(['name', 'phone', 'store', 'address'])
+        && d.customer.name is string && d.customer.name.size() > 0 && d.customer.name.size() <= 30
+        && d.customer.phone is string && d.customer.phone.size() >= 9 && d.customer.phone.size() <= 20
+        && d.note is string && d.note.size() <= 200
+        && d.amounts is map && d.amounts.total is number && d.amounts.total >= 0
+        && d.payment_method in ['transfer', 'stored_value']
+        && (isValidShopOrder(d) || isValidTopup(d));
+    }
+
+    function isValidShopOrder(d) {
+      return d.type == 'order'
+        && d.keys().hasOnly(['type', 'order_no', 'status', 'payment_method', 'delivery', 'delivery_label',
+                             'customer', 'note', 'items', 'amounts', 'created_at'])
+        && d.delivery in ['pickup', 'cvs', 'home']
+        && d.items is list && d.items.size() > 0 && d.items.size() <= 30;
+    }
+
+    function isValidTopup(d) {
+      return d.type == 'topup'
+        && d.keys().hasOnly(['type', 'order_no', 'status', 'payment_method', 'customer', 'note',
+                             'topup', 'amounts', 'created_at'])
+        && d.payment_method == 'transfer'
+        && d.topup is map && d.topup.plan_amount is number && d.topup.plan_amount > 0;
+    }
+
     match /products/{productId} {
       // 客人只能讀到上架中的商品；下架的只有管理員看得到
       allow read: if resource.data.status == '上架' || isAdmin();
       allow create, update: if isAdmin() && isValidProduct(request.resource.data);
       allow delete: if isAdmin();
+    }
+
+    // 商店設定（轉帳帳號、運費、耗材費）：前台要顯示，所以大家都能讀；只有管理員能改
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 訂單：客人只能「新增」，看不到也改不了任何訂單（包括自己的）；管理員可以查看與處理
+    match /orders/{orderId} {
+      allow create: if isValidNewOrder(request.resource.data);
+      allow read, update, delete: if isAdmin();
+    }
+
+    // 儲值會員餘額與交易紀錄：只有管理員能看、能改
+    match /members/{memberId} {
+      allow read, write: if isAdmin();
+
+      match /transactions/{transactionId} {
+        allow read, write: if isAdmin();
+      }
     }
 
     // 沒有寫到的其他資料，一律不開放讀寫
