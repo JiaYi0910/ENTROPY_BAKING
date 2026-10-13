@@ -128,7 +128,7 @@ async function loadProducts() {
   try {
     const [
       { initializeApp },
-      { getFirestore, collection, doc, query, where, onSnapshot, addDoc, serverTimestamp },
+      { getFirestore, collection, doc, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp },
       { getAuth, onAuthStateChanged, signInWithCustomToken, signOut, updateProfile },
       { firebaseConfig }
     ] = await Promise.all([
@@ -141,7 +141,7 @@ async function loadProducts() {
     const app = initializeApp(firebaseConfig, 'storefront');
     const db = getFirestore(app);
     initCustomerAuth({ auth: getAuth(app), onAuthStateChanged, signInWithCustomToken, signOut, updateProfile });
-    initMyOrders({ db, collection, query, where, onSnapshot });
+    initMyOrders({ db, collection, doc, query, where, onSnapshot, updateDoc, serverTimestamp });
     const q = query(collection(db, "products"), where("status", "==", "上架"));
 
     onSnapshot(q, (querySnapshot) => {

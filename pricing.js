@@ -36,11 +36,13 @@ export const ORDER_STATUSES = ['待付款', '已付款', '已出貨', '已完成
 export function statusHint(order) {
   const isTopup = order.type === 'topup';
   switch (order.status) {
-    case '待付款':
-      if (isTopup) return '請轉帳後用 LINE 回報帳號後五碼，確認入帳後即為您加值。';
-      return order.payment_method === 'stored_value'
-        ? '店家確認後會從您的儲值金扣款並安排出貨。'
-        : '請轉帳後用 LINE 回報帳號後五碼，確認入帳後即安排出貨。';
+    case '待付款': {
+      if (order.payment_method === 'stored_value') return '店家確認後會從您的儲值金扣款並安排出貨。';
+      const after = isTopup ? '確認入帳後即為您加值' : '確認入帳後即安排出貨';
+      if (order.payment_reported_at) return `已收到您的匯款回報（帳號後五碼 ${order.payment_last5}），${after}。`;
+      // 用 LINE 登入的客人在「我的訂單」直接填後五碼
+      return order.customer_uid ? `請轉帳後在下方填寫帳號後五碼，${after}。` : `請轉帳後用 LINE 回報帳號後五碼，${after}。`;
+    }
     case '已付款':
       return isTopup ? '已確認入帳，正在為您加值。' : '已確認付款，正在為您準備咖啡豆。';
     case '已出貨':

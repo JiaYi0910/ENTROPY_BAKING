@@ -1,26 +1,34 @@
 // 我的訂單：客人用 LINE 登入後，列出自己的訂單與即時狀態（安全規則確保只看得到自己的）
-import { escapeHtml, paymentInfoHtml, reportPaymentUrl } from './order.js';
+// 也可以在這裡回報匯款帳號後五碼、查看儲值金餘額
+import { escapeHtml, paymentInfoHtml, getShopSettings } from './order.js';
 import { money, sizeLabel, paymentLabel, statusHint } from './pricing.js';
 import { isLineLoginEnabled, getCustomer, onCustomerChange, requireCustomer, logoutCustomer, canLogout } from './line-login.js';
 
 const LINE_CHAT_URL = 'https://line.me/R/ti/p/%40245rbror';
 const $ = (id) => document.getElementById(id);
 
-let firestore = null;   // { db, collection, query, where, onSnapshot }
-let stopListener = null;
+let firestore = null;   // { db, collection, doc, query, where, onSnapshot, updateDoc, serverTimestamp }
+let stopListeners = [];
 let listeningUid = null;
 let myOrders = [];      // null 代表載入失敗
+let myMembers = [];     // 綁定這個 LINE 帳號的儲值會員
 let loaded = false;
 let logoutAllowed = true;
 
 // 頁面載入時綁定按鈕（不用等 Firebase）
 export function setupMyOrdersUi() {
   $('orders-button')?.addEventListener('click', openMyOrders);
-  document.querySelectorAll('[data-open-orders]').forEach(el => el.addEventListener('click', (e) => {
+  // 頁尾連結、完成頁的「到我的訂單回報匯款」都用 data-open-orders 打開
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('[data-open-orders]');
+    if (!link) return;
     e.preventDefault();
+    const dialog = link.closest('dialog');
+    if (dialog && dialog.id !== 'orders-dialog') dialog.close();
     openMyOrders();
-  }));
-  $('orders-dialog')?.addEventListener('click', async (e) => {
+  });
+  const dialog = $('orders-dialog');
+  dialog?.addEventListener('click', async (e) => {
     if (e.target.closest('[data-login]')) {
       e.target.closest('[data-login]').disabled = true;
       try {
@@ -31,6 +39,11 @@ export function setupMyOrdersUi() {
     }
     if (e.target.closest('[data-logout]')) await logoutCustomer();
   });
+  dialog?.addEventListener('submit', onReportPayment);
+  // 填後五碼時先不重畫，離開輸入框後再更新
+  dialog?.addEventListener('focusout', () => setTimeout(() => {
+    if (!isTyping()) render();
+  }));
 }
 
 // Firebase 載入後呼叫
@@ -50,22 +63,24 @@ export function openMyOrders() {
   });
 }
 
-// 登入或登出時，重新讀取這位客人的訂單（即時更新）
+// 登入或登出時，重新讀取這位客人的訂單與儲值金（即時更新）
 function subscribe(customer) {
   if (!firestore) return;
   const uid = customer?.uid ?? null;
   if (uid !== listeningUid) {
-    stopListener?.();
-    stopListener = null;
+    stopListeners.forEach(stop => stop());
+    stopListeners = [];
     myOrders = [];
+    myMembers = [];
     loaded = false;
     listeningUid = uid;
     if (uid) {
-      const q = firestore.query(firestore.collection(firestore.db, 'orders'), firestore.where('customer_uid', '==', uid));
-      stopListener = firestore.onSnapshot(q, (snapshot) => {
+      const { db, collection, query, where, onSnapshot } = firestore;
+      stopListeners.push(onSnapshot(query(collection(db, 'orders'), where('customer_uid', '==', uid)), (snapshot) => {
         // 新的在前；剛送出、時間還沒寫入的訂單排最前面
         const time = (o) => o.created_at?.toMillis?.() ?? Number.MAX_SAFE_INTEGER;
-        myOrders = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => time(b) - time(a));
+        // 剛送出、伺服器時間還沒回來的欄位先用估計時間，畫面才能馬上顯示「已回報」
+        myOrders = snapshot.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) })).sort((a, b) => time(b) - time(a));
         loaded = true;
         render();
       }, (error) => {
@@ -73,7 +88,16 @@ function subscribe(customer) {
         myOrders = null;
         loaded = true;
         render();
-      });
+      }));
+      // 儲值金：店家確認這位客人的儲值後才會綁定；讀不到就不顯示
+      stopListeners.push(onSnapshot(query(collection(db, 'members'), where('line_uids', 'array-contains', uid)), (snapshot) => {
+        myMembers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        render();
+      }, (error) => {
+        console.warn('儲值金讀取失敗', error);
+        myMembers = [];
+        render();
+      }));
     }
   }
   render();
@@ -92,9 +116,14 @@ function showLoginError(message) {
   error.textContent = message;
 }
 
+function isTyping() {
+  const active = document.activeElement;
+  return Boolean(active && $('orders-body')?.contains(active) && active.matches('input'));
+}
+
 function render() {
   const body = $('orders-body');
-  if (!body) return;
+  if (!body || isTyping()) return; // 客人正在填後五碼，等離開輸入框再更新
   const customer = getCustomer();
 
   if (!isLineLoginEnabled()) {
@@ -119,7 +148,8 @@ function render() {
     <div class="orders-user">
       <span>👋 ${escapeHtml(customer.name || 'LINE 會員')}，您好</span>
       ${logoutAllowed ? '<button type="button" class="link-btn" data-logout>登出</button>' : ''}
-    </div>`;
+    </div>
+    ${myMembers.map(balanceHtml).join('')}`;
   if (!loaded) {
     body.innerHTML = head + '<p class="orders-empty">訂單載入中…</p>';
   } else if (myOrders === null) {
@@ -143,6 +173,29 @@ function formatDate(timestamp) {
   }).format(date);
 }
 
+function shortDate(ms) {
+  if (!ms) return '';
+  return new Intl.DateTimeFormat('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+}
+
+// 儲值金餘額與最近幾筆加值、扣款（店家內部備註不顯示）
+function balanceHtml(m) {
+  const recent = Array.isArray(m.recent_tx) ? m.recent_tx.slice(0, 5) : [];
+  return `
+    <div class="my-balance">
+      <div class="my-balance-head">
+        <span>💎 儲值金餘額<small>會員電話 ${escapeHtml(m.phone || m.id)}</small></span>
+        <strong>${money(m.balance)}</strong>
+      </div>
+      ${recent.length ? `<ul class="my-balance-tx">${recent.map(t => `
+        <li>
+          <span>${escapeHtml(shortDate(t.at))}</span>
+          <span>${escapeHtml(t.type)}${t.order_no ? `・${escapeHtml(t.order_no)}` : '・門市登記'}</span>
+          <span class="${t.amount >= 0 ? 'tx-plus' : 'tx-minus'}">${t.amount >= 0 ? '+' : '−'}${money(Math.abs(t.amount))}</span>
+        </li>`).join('')}</ul>` : ''}
+    </div>`;
+}
+
 function orderCardHtml(o) {
   const isTopup = o.type === 'topup';
   const items = isTopup
@@ -150,7 +203,7 @@ function orderCardHtml(o) {
     : (o.items || []).map(i => `<li>${escapeHtml(i.name)}｜${escapeHtml(i.process)}｜${escapeHtml(sizeLabel(i.size))} ×${escapeHtml(i.qty)}</li>`).join('');
   const meta = [formatDate(o.created_at), isTopup ? '儲值申請' : o.delivery_label, paymentLabel(o.payment_method)]
     .filter(Boolean).map(escapeHtml).join(' · ');
-  const needsTransfer = o.status === '待付款' && o.payment_method !== 'stored_value';
+  const needsTransfer = o.status === '待付款' && o.payment_method === 'transfer';
 
   return `
     <li class="my-order">
@@ -163,7 +216,67 @@ function orderCardHtml(o) {
       <div class="my-order-total">合計 <strong>${money(o.amounts?.total)}</strong></div>
       <p class="my-order-hint">${escapeHtml(statusHint(o))}</p>
       ${needsTransfer ? `
-        <div class="payment-box">${paymentInfoHtml(o)}</div>
-        <a class="btn btn-line btn-block" href="${reportPaymentUrl(o)}" target="_blank" rel="noopener noreferrer">用 LINE 回報匯款</a>` : ''}
+        <div class="payment-box">${paymentInfoHtml(o, { inMyOrders: true })}</div>
+        ${reportFormHtml(o)}` : ''}
     </li>`;
+}
+
+// 回報匯款：填帳號後五碼，店家後台會看到並收到 Email
+function reportFormHtml(o) {
+  const reported = Boolean(o.payment_reported_at);
+  return `
+    <form class="report-form" data-order-id="${escapeHtml(o.id)}" novalidate>
+      <label>匯款帳號後五碼
+        <input type="text" name="last5" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="例如 12345" value="${escapeHtml(o.payment_last5 || '')}">
+      </label>
+      <button type="submit" class="btn btn-primary">${reported ? '更新回報' : '回報匯款'}</button>
+      <p class="report-message" role="status">${reported ? `✓ 已於 ${escapeHtml(formatDate(o.payment_reported_at))} 回報` : ''}</p>
+    </form>`;
+}
+
+async function onReportPayment(e) {
+  const form = e.target.closest('.report-form');
+  if (!form) return;
+  e.preventDefault();
+  const input = form.elements.last5;
+  const message = form.querySelector('.report-message');
+  const last5 = input.value.replace(/\s/g, '');
+  if (!/^\d{5}$/.test(last5)) {
+    message.textContent = '請填寫 5 位數字';
+    message.classList.add('is-error');
+    input.focus();
+    return;
+  }
+  const button = form.querySelector('button');
+  button.disabled = true;
+  message.classList.remove('is-error');
+  message.textContent = '送出中…';
+  const orderId = form.dataset.orderId;
+  try {
+    const { db, doc, updateDoc, serverTimestamp } = firestore;
+    await updateDoc(doc(db, 'orders', orderId), { payment_last5: last5, payment_reported_at: serverTimestamp() });
+    notifyPaymentReported(orderId);
+    input.blur();
+    render(); // 換成「已回報」的樣子
+  } catch (error) {
+    console.error('回報匯款失敗', error);
+    message.textContent = `回報失敗，請稍後再試，或用 LINE 告訴我們。（錯誤代碼：${String(error?.code || error?.message || '未知').slice(0, 40)}）`;
+    message.classList.add('is-error');
+  } finally {
+    button.disabled = false;
+  }
+}
+
+// 請 Google 小幫手寄 Email 通知店家（小幫手會到資料庫確認真的有回報才寄）
+function notifyPaymentReported(orderId) {
+  const url = getShopSettings().notify_url || '';
+  if (!url.startsWith('https://script.google.com/')) return;
+  fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'payment-reported', orderId })
+  }).catch(() => {
+    // 通知失敗不影響回報，店家後台一樣看得到
+  });
 }

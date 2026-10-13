@@ -5,7 +5,9 @@
  * 1. LINE 登入：確認客人真的是這個 LINE 使用者，再發給網站登入憑證（客人只看得到自己的訂單）
  * 2. 新訂單：寄 Email 給管理員、備份到試算表、用 LINE 機器人傳訂單確認給客人
  * 3. 訂單狀態更新：已付款／已出貨／已取消（儲值完成）時，用 LINE 通知客人
- * 4. 設定檢查：後台「寄送測試通知」會寄測試信，並回報哪些設定已完成
+ * 4. 客人在「我的訂單」回報匯款：寄 Email 請管理員核對入帳
+ * 5. 每天早上寄一封待處理訂單提醒（第一次要執行 setupDailyReminder 開啟）
+ * 6. 設定檢查：後台「寄送測試通知」會寄測試信，並回報哪些設定已完成
  */
 
 // 收到新訂單要通知的信箱；要通知多人時用逗號隔開，例如 ['a@gmail.com', 'b@gmail.com']
@@ -18,6 +20,10 @@ const STORE_ADDRESS = '新竹縣湖口鄉光復東路73號（10:00-20:00，例�
 
 // 每小時最多寄幾封 Email，避免網址被有心人拿來大量寄信
 const MAX_EMAILS_PER_HOUR = 30;
+
+// 每日提醒：幾點寄、待付款超過幾天要提醒
+const REMIND_HOUR = 9;
+const REMIND_UNPAID_DAYS = 2;
 
 // 以下三個設定放在「專案設定 → 指令碼屬性」，不要寫在程式裡（它們是密碼等級的資料）
 //   LINE_LOGIN_CHANNEL_ID       LINE Login 的 Channel ID
@@ -40,6 +46,7 @@ function doPost(e) {
       case 'login': return json(handleLogin(body));
       case 'order-created': return json(handleOrderCreated(body));
       case 'order-status': return json(handleOrderStatus(body));
+      case 'payment-reported': return json(handlePaymentReported(body));
       case 'test': return json(handleTest());
       default: return json({ ok: false, error: 'unknown-action' });
     }
@@ -119,7 +126,7 @@ function legacyEmail(body) {
     && typeof body.message === 'string' && body.message.length <= 3000;
   if (!valid) return { ok: false, error: 'invalid' };
   if (!withinHourlyLimit()) return { ok: false, error: 'rate-limited' };
-  sendEmail(body.type, body.order_no, body.customer.name, body.amounts.total, body.message);
+  sendEmail(orderKind(body.type), body.order_no, body.customer.name, body.amounts.total, body.message);
   saveToSheet(body);
   return { ok: true, legacy: true };
 }
@@ -134,7 +141,7 @@ function createdMessage(order, settings) {
     lines.push('方案：儲值 ' + money(t.plan_amount) + '（加贈 ' + money(t.bonus) + '，共 ' + money(t.credit) + '）');
     lines.push('');
     lines.push(bankText(settings, total));
-    lines.push('轉帳後請直接在這裡回覆帳號後五碼，確認入帳後即為您加值。');
+    lines.push('轉帳後請點下方連結，在「我的訂單」填寫帳號後五碼，確認入帳後即為您加值。');
   } else {
     lines.push('【' + SHOP_NAME + '】已收到您的訂單 🎉');
     lines.push('訂單編號：' + order.order_no);
@@ -148,11 +155,11 @@ function createdMessage(order, settings) {
       lines.push('店家確認後會從您的儲值金扣款並安排出貨。');
     } else {
       lines.push(bankText(settings, total));
-      lines.push('轉帳後請直接在這裡回覆帳號後五碼，確認入帳後即安排出貨。');
+      lines.push('轉帳後請點下方連結，在「我的訂單」填寫帳號後五碼，確認入帳後即安排出貨。');
     }
   }
   lines.push('');
-  lines.push('查看訂單狀態：' + ordersLink(settings));
+  lines.push((order.payment_method === 'stored_value' ? '查看訂單狀態：' : '回報匯款／查看訂單：') + ordersLink(settings));
   return lines.join('\n');
 }
 
@@ -219,12 +226,102 @@ function statusMessage(order) {
   }
 }
 
-// ========== 4. 設定檢查（後台「寄送測試通知」） ==========
+// ========== 4. 客人回報匯款 ==========
+
+function handlePaymentReported(body) {
+  if (!serviceAccount()) return { ok: false, error: 'not-configured' };
+  const orderId = validId(body.orderId);
+  if (!orderId) return { ok: false, error: 'bad-request' };
+  const order = firestoreGet('orders/' + orderId);
+  if (!order) return { ok: false, error: 'not-found' };
+
+  // 到資料庫確認客人真的回報了（網站送來的內容不採信）
+  const last5 = String(order.payment_last5 || '');
+  if (order.status !== '待付款' || !order.payment_reported_at || !/^\d{5}$/.test(last5)) return { ok: true, skipped: 'not-reported' };
+  const notified = order.notified || {};
+  if (notified.payment_reported === last5) return { ok: true, skipped: 'already-notified' };
+  firestorePatch('orders/' + orderId, { notified: Object.assign({}, notified, { payment_reported: last5 }) });
+
+  if (!withinHourlyLimit()) return { ok: true, skipped: 'rate-limited' };
+  const c = order.customer || {};
+  const isTopup = order.type === 'topup';
+  sendEmail('客人回報匯款', order.order_no, c.name, order.amounts && order.amounts.total, [
+    (isTopup ? '【儲值申請】' : '【咖啡豆訂單】') + order.order_no,
+    '應付金額：' + money(order.amounts && order.amounts.total),
+    '帳號後五碼：' + last5,
+    '回報時間：' + formatTaipei(order.payment_reported_at),
+    '姓名：' + c.name + '　電話：' + c.phone,
+    '',
+    isTopup ? '請核對入帳後，到後台按「確認入帳並加值」。' : '請核對入帳後，到後台把訂單改成「已付款」。'
+  ].join('\n'));
+  return { ok: true, emailed: true };
+}
+
+// ========== 5. 每日待處理訂單提醒 ==========
+
+// 第一次設定：在上方選「setupDailyReminder」按「執行」，之後每天早上自動檢查
+function setupDailyReminder() {
+  ScriptApp.getProjectTriggers()
+    .filter(function (t) { return t.getHandlerFunction() === 'dailyReminder'; })
+    .forEach(function (t) { ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('dailyReminder').timeBased().everyDays(1).atHour(REMIND_HOUR).inTimezone('Asia/Taipei').create();
+  console.log('已設定：每天 ' + REMIND_HOUR + ' 點檢查待處理訂單，有需要處理的才會寄信');
+}
+
+function dailyReminder() {
+  if (!serviceAccount()) return { sent: false, reason: 'not-configured' };
+  const now = Date.now();
+  const reported = [];
+  const storedValue = [];
+  const overdue = [];
+  firestoreQuery('orders', 'status', '待付款').forEach(function (o) {
+    if (o.payment_method === 'stored_value') storedValue.push(o);
+    else if (o.payment_reported_at) reported.push(o);
+    else if (o.created_at && now - o.created_at.getTime() >= REMIND_UNPAID_DAYS * 86400000) overdue.push(o);
+  });
+  const total = reported.length + storedValue.length + overdue.length;
+  if (!total) return { sent: false, reason: 'nothing-to-do' };
+
+  const line = function (o) {
+    const c = o.customer || {};
+    return '・' + o.order_no + (o.type === 'topup' ? '（儲值）' : '') + '｜' + c.name + '｜' + money(o.amounts && o.amounts.total)
+      + (o.created_at ? '｜' + formatTaipei(o.created_at) + ' 下單' : '');
+  };
+  const sections = [];
+  if (reported.length) {
+    sections.push('💰 客人已回報匯款，請核對入帳（' + reported.length + ' 筆）');
+    reported.forEach(function (o) { sections.push(line(o) + '｜後五碼 ' + o.payment_last5); });
+    sections.push('');
+  }
+  if (storedValue.length) {
+    sections.push('💎 儲值金扣款待處理（' + storedValue.length + ' 筆）');
+    storedValue.forEach(function (o) { sections.push(line(o)); });
+    sections.push('');
+  }
+  if (overdue.length) {
+    sections.push('⏰ 超過 ' + REMIND_UNPAID_DAYS + ' 天還沒付款（' + overdue.length + ' 筆），可以聯絡客人或改為「已取消」');
+    overdue.forEach(function (o) { sections.push(line(o) + '｜' + (o.customer && o.customer.phone)); });
+    sections.push('');
+  }
+  MailApp.sendEmail({
+    to: ADMIN_EMAILS.join(','),
+    subject: '【' + SHOP_NAME + '】今日待處理訂單 ' + total + ' 筆',
+    body: sections.join('\n') + '\n――――――――――\n請到後台「訂單管理」處理：\n' + ADMIN_URL,
+    name: SHOP_NAME + ' 訂單通知'
+  });
+  return { sent: true, reported: reported.length, storedValue: storedValue.length, overdue: overdue.length };
+}
+
+function formatTaipei(date) {
+  return date instanceof Date ? Utilities.formatDate(date, 'Asia/Taipei', 'MM/dd HH:mm') : '';
+}
+
+// ========== 6. 設定檢查（後台「寄送測試通知」） ==========
 
 function handleTest() {
   const result = { ok: true, email: false, sheet: false, firebase: false, lineLogin: Boolean(prop('LINE_LOGIN_CHANNEL_ID')), linePush: false };
   if (withinHourlyLimit()) {
-    sendEmail('order', 'TEST', '測試客人', 0, '這是一封測試信，收到代表新訂單 Email 通知可以正常寄出。');
+    sendEmail('新訂單', 'TEST', '測試客人', 0, '這是一封測試信，收到代表新訂單 Email 通知可以正常寄出。');
     result.email = true;
   }
   result.sheet = Boolean(SpreadsheetApp.getActiveSpreadsheet());
@@ -235,6 +332,11 @@ function handleTest() {
     } catch (error) {
       result.firebaseError = String(error.message || error).slice(0, 200);
     }
+  }
+  try {
+    result.reminder = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'dailyReminder'; });
+  } catch (error) {
+    result.reminder = false; // 還沒授權「管理觸發條件」
   }
   const token = prop('LINE_CHANNEL_ACCESS_TOKEN');
   if (token) {
@@ -267,12 +369,15 @@ function sendAdminEmail(order) {
   if (c.address) lines.push('收件地址：' + c.address);
   if (order.note) lines.push('備註：' + order.note);
   lines.push(order.customer_uid ? 'LINE：已登入（狀態更新會自動通知客人）' : 'LINE：未登入');
-  sendEmail(order.type, order.order_no, c.name, a.total, lines.join('\n'));
+  sendEmail(orderKind(order.type), order.order_no, c.name, a.total, lines.join('\n'));
 }
 
-function sendEmail(type, orderNo, name, total, text) {
+function orderKind(type) {
+  return type === 'topup' ? '儲值申請' : '新訂單';
+}
+
+function sendEmail(kind, orderNo, name, total, text) {
   const isTest = orderNo === 'TEST';
-  const kind = type === 'topup' ? '儲值申請' : '新訂單';
   const subject = (isTest ? '【測試】' : '') + '【' + SHOP_NAME + '】' + kind + ' ' + orderNo + '｜' + name + '｜' + money(total);
   const body = text + '\n\n――――――――――\n請到後台「訂單管理」查看與處理：\n' + ADMIN_URL;
   MailApp.sendEmail({ to: ADMIN_EMAILS.join(','), subject: subject, body: body, name: SHOP_NAME + ' 訂單通知' });
@@ -393,6 +498,26 @@ function firestoreGet(path) {
   if (res.getResponseCode() === 404) return null;
   if (res.getResponseCode() !== 200) throw new Error('讀取資料庫失敗：' + res.getContentText().slice(0, 200));
   return fromFirestore(JSON.parse(res.getContentText()).fields || {});
+}
+
+// 查詢某個欄位等於某個值的資料（單一欄位條件，不需要另外建立索引）
+function firestoreQuery(collectionId, field, value) {
+  const url = 'https://firestore.googleapis.com/v1/projects/' + serviceAccount().project_id + '/databases/(default)/documents:runQuery';
+  const res = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + googleAccessToken() },
+    payload: JSON.stringify({ structuredQuery: {
+      from: [{ collectionId: collectionId }],
+      where: { fieldFilter: { field: { fieldPath: field }, op: 'EQUAL', value: toValue(value) } },
+      limit: 300
+    } }),
+    muteHttpExceptions: true
+  });
+  if (res.getResponseCode() !== 200) throw new Error('查詢資料庫失敗：' + res.getContentText().slice(0, 200));
+  return JSON.parse(res.getContentText())
+    .filter(function (r) { return r.document; })
+    .map(function (r) { return fromFirestore(r.document.fields || {}); });
 }
 
 // 只更新指定的欄位，其他欄位不動

@@ -73,17 +73,33 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // 訂單：客人可以「新增」；用 LINE 登入的客人只看得到自己的訂單，改不了任何訂單；管理員可以查看與處理
+    // 客人回報匯款：只能是自己的「待付款、銀行轉帳」訂單，而且只能填帳號後五碼與回報時間
+    function isPaymentReport() {
+      return request.auth != null
+        && resource.data.customer_uid == request.auth.uid
+        && resource.data.status == '待付款'
+        && resource.data.payment_method == 'transfer'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['payment_last5', 'payment_reported_at'])
+        && request.resource.data.payment_last5 is string
+        && request.resource.data.payment_last5.matches('^[0-9]{5}$')
+        && request.resource.data.payment_reported_at == request.time;
+    }
+
+    // 訂單：客人可以「新增」；用 LINE 登入的客人只看得到自己的訂單，只能回報匯款；管理員可以查看與處理
     match /orders/{orderId} {
       allow create: if isValidNewOrder(request.resource.data);
       allow read: if isAdmin()
         || (request.auth != null && resource.data.customer_uid == request.auth.uid);
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() || isPaymentReport();
+      allow delete: if isAdmin();
     }
 
-    // 儲值會員餘額與交易紀錄：只有管理員能看、能改
+    // 儲值會員：只有管理員能修改；綁定 LINE 的客人可以查看自己的餘額
+    // 詳細交易紀錄（含經手管理員）只有管理員看得到
     match /members/{memberId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin()
+        || (request.auth != null && request.auth.uid in resource.data.line_uids);
+      allow write: if isAdmin();
 
       match /transactions/{transactionId} {
         allow read, write: if isAdmin();

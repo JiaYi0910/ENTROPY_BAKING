@@ -2046,6 +2046,99 @@ section[data-step="done"] > .btn-block {
 .status-已完成 { background-color: #e6f4ea; color: #137333; }
 .status-已取消 { background-color: #eeeeee; color: #6b6b6b; }
 
+/* 回報匯款：填帳號後五碼 */
+.report-form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 8px 10px;
+}
+
+.report-form label {
+    display: grid;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.report-form input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 16px; /* 16px 以上，iPhone 點輸入框時才不會自動放大畫面 */
+    letter-spacing: 2px;
+}
+
+.report-form .btn {
+    padding: 10px 18px;
+}
+
+.report-message {
+    grid-column: 1 / -1;
+    min-height: 1em;
+    font-size: 13px;
+    color: #137333;
+}
+
+.report-message:empty {
+    display: none;
+}
+
+.report-message.is-error {
+    color: #c62828;
+}
+
+/* 儲值金餘額 */
+.my-balance {
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border: 1px solid #e9dcf9;
+    border-radius: var(--radius);
+    background-color: #faf6ff;
+}
+
+.my-balance-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.my-balance-head small {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.my-balance-head strong {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    color: #6d28d9;
+}
+
+.my-balance-tx {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed #e2d3f5;
+    list-style: none;
+    font-size: 13px;
+}
+
+.my-balance-tx li {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    padding: 3px 0;
+}
+
+.my-balance-tx .tx-plus { color: #137333; }
+.my-balance-tx .tx-minus { color: #c62828; }
+
 /* ==========================================
    響應式調整
    ========================================== */

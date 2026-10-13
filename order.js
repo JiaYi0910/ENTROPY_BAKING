@@ -589,7 +589,8 @@ function notifyServer(order, orderId) {
 }
 
 // 完成頁、我的訂單的付款說明：轉帳顯示帳號；儲值金扣款說明會由店家扣款
-export function paymentInfoHtml(order) {
+// inMyOrders：在「我的訂單」裡，回報表單就在說明下方
+export function paymentInfoHtml(order, { inMyOrders = false } = {}) {
   const total = money(order.amounts.total);
   if (order.payment_method === 'stored_value') {
     return `<p class="payment-title">💎 儲值金扣款 <strong>${total}</strong></p>
@@ -603,8 +604,31 @@ export function paymentInfoHtml(order) {
       </dl>`
     : '<p class="bank-pending">轉帳帳號將由店家在 LINE 上提供。</p>';
   const after = order.type === 'topup' ? '確認入帳後即為您加值' : '確認入帳後即安排出貨';
+  // 在「我的訂單」裡，訂單卡片上方已經說明要在下方填後五碼，這裡就不重複
+  const how = inMyOrders ? ''
+    : order.customer_uid
+      ? `轉帳後請按下方按鈕，到「我的訂單」填寫<strong>帳號後五碼</strong>，${after}。`
+      : `轉帳後請按下方按鈕，用 LINE 回覆<strong>帳號後五碼</strong>，${after}。若 LINE 顯示「連線失敗」，回到這頁再按一次即可。`;
   return `<p class="payment-title">💳 請轉帳 <strong>${total}</strong> 至以下帳戶</p>${bank}
-    <p class="payment-note">轉帳後請按下方按鈕，用 LINE 回覆<strong>帳號後五碼</strong>，${after}。若 LINE 顯示「連線失敗」，回到這頁再按一次即可。</p>`;
+    ${how ? `<p class="payment-note">${how}</p>` : ''}`;
+}
+
+// 完成頁的回報按鈕：用 LINE 登入的客人到「我的訂單」填後五碼；沒登入的客人用 LINE 回報
+function setupReportButton(button, order) {
+  const inMyOrders = Boolean(order.customer_uid) && order.payment_method !== 'stored_value';
+  if (inMyOrders) {
+    button.href = '?view=orders';
+    button.removeAttribute('target');
+    button.dataset.openOrders = '';
+    button.textContent = '到「我的訂單」回報匯款';
+  } else {
+    button.href = reportPaymentUrl(order);
+    button.target = '_blank';
+    delete button.dataset.openOrders;
+    button.textContent = order.payment_method === 'stored_value' ? '用 LINE 聯絡我們' : '用 LINE 回報匯款';
+  }
+  button.classList.toggle('btn-line', !inMyOrders);
+  button.classList.toggle('btn-primary', inMyOrders);
 }
 
 export function reportPaymentUrl(order) {
@@ -627,9 +651,7 @@ function finishOrder(order) {
   $('done-title').textContent = '訂單已送出，謝謝您的訂購！';
   $('done-order-no').textContent = order.order_no;
   $('done-payment').innerHTML = paymentInfoHtml(order);
-  const report = $('btn-report-payment');
-  report.href = reportPaymentUrl(order);
-  report.textContent = order.payment_method === 'stored_value' ? '用 LINE 聯絡我們' : '用 LINE 回報匯款';
+  setupReportButton($('btn-report-payment'), order);
   showStep('done');
 }
 
@@ -720,7 +742,7 @@ function finishTopup(order) {
   $('topup-form').reset();
   $('topup-order-no').textContent = order.order_no;
   $('topup-payment').innerHTML = paymentInfoHtml(order);
-  $('btn-topup-report').href = reportPaymentUrl(order);
+  setupReportButton($('btn-topup-report'), order);
   document.querySelectorAll('#topup-dialog [data-topup-step]').forEach(el => {
     el.hidden = el.dataset.topupStep !== 'done';
   });

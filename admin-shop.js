@@ -1,7 +1,7 @@
 // 後台：訂單管理、儲值會員、商店設定、新訂單通知
 import {
   collection, doc, onSnapshot, query, orderBy, limit, updateDoc, deleteDoc, setDoc, getDocs,
-  runTransaction, serverTimestamp
+  runTransaction, serverTimestamp, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import {
   ORDER_STATUSES, TOPUP_PLANS, normalizeSettings, money, sizeLabel, unitPrice, processingFee,
@@ -85,6 +85,7 @@ export function initShop(context) {
 
   $('member-search').addEventListener('input', renderMembers);
   $('member-list').addEventListener('toggle', onMemberToggle, true);
+  $('member-list').addEventListener('click', onMemberClick);
   $('member-adjust-form').addEventListener('submit', onManualAdjust);
   $('member-adjust-form').addEventListener('input', () => { $('member-adjust-error').hidden = true; });
 
@@ -115,10 +116,14 @@ export function startShop() {
     query(collection(db, 'orders'), orderBy('created_at', 'desc'), limit(300)),
     (snapshot) => {
       const ids = snapshot.docs.map(d => d.id);
+      const previous = orders;
       orders = new Map(snapshot.docs.map(d => [d.id, d.data()]));
       if (knownOrderIds) {
         const fresh = ids.filter(id => !knownOrderIds.has(id));
         if (fresh.length) announceNewOrders(fresh);
+        const reportedAt = (o) => o?.payment_reported_at?.toMillis?.() ?? 0;
+        const reports = ids.filter(id => !fresh.includes(id) && reportedAt(orders.get(id)) > reportedAt(previous.get(id)));
+        if (reports.length) announcePaymentReports(reports);
       }
       knownOrderIds = new Set(ids);
       renderOrders();
@@ -183,6 +188,27 @@ function announceNewOrders(ids) {
   }
 }
 
+// 客人在「我的訂單」回報匯款時提示管理員核對入帳
+function announcePaymentReports(ids) {
+  const first = orders.get(ids[0]);
+  const text = ids.length === 1
+    ? `💰 客人回報匯款：${first.order_no}（${first.customer?.name}，後五碼 ${first.payment_last5}）`
+    : `💰 有 ${ids.length} 筆匯款回報`;
+  ctx.showToast(text, 'warn');
+  playChime();
+  if (document.hidden) {
+    unseenCount += ids.length;
+    document.title = `(${unseenCount}) ${baseTitle}`;
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('熵與焙 客人回報匯款', { body: text.replace('💰 ', '') });
+    }
+  }
+}
+
+function isPaymentReported(o) {
+  return o.status === '待付款' && Boolean(o.payment_reported_at) && o.payment_method === 'transfer';
+}
+
 // 提示音：兩聲短音
 function playChime() {
   try {
@@ -228,7 +254,8 @@ function filteredOrders() {
   const filter = $('order-status-filter').value;
   return [...orders.entries()].filter(([, o]) => {
     if (filter === 'topup' && o.type !== 'topup') return false;
-    if (filter && filter !== 'topup' && o.status !== filter) return false;
+    if (filter === 'reported' && !isPaymentReported(o)) return false;
+    if (filter && filter !== 'topup' && filter !== 'reported' && o.status !== filter) return false;
     if (!keyword) return true;
     return [o.order_no, o.customer?.name, o.customer?.phone].some(v => String(v ?? '').toLowerCase().includes(keyword));
   });
@@ -263,15 +290,23 @@ function orderHtml(id, o) {
         <span class="order-no">${isTopup ? '<span class="type-badge">儲值</span>' : ''}${esc(o.order_no)}</span>
         <span class="order-meta">${meta}</span>
         <strong class="order-total">${money(o.amounts?.total)}</strong>
+        ${isPaymentReported(o) ? '<span class="report-badge">💰 已回報</span>' : ''}
         <span class="status-badge status-${esc(status)}">${esc(status)}</span>
       </summary>
       <div class="order-body">
+        ${paymentReportHtml(o)}
         ${isTopup ? topupDetailHtml(o) : itemsDetailHtml(o)}
         ${customerHtml(o)}
         ${storedValueHtml(o)}
         ${manageFormHtml(id, o, status)}
       </div>
     </details>`;
+}
+
+function paymentReportHtml(o) {
+  if (!isPaymentReported(o)) return '';
+  const next = o.type === 'topup' ? '核對入帳後，按下方「確認入帳並加值」。' : '核對入帳後，把訂單狀態改成「已付款」並儲存。';
+  return `<p class="payment-report-box">💰 客人於 ${formatTime(o.payment_reported_at)} 回報匯款，帳號後五碼 <strong>${esc(o.payment_last5)}</strong>。${next}</p>`;
 }
 
 function itemsDetailHtml(o) {
@@ -339,8 +374,19 @@ function customerHtml(o) {
       ${c.address ? `<div><dt>收件地址</dt><dd>${esc(c.address)}</dd></div>` : ''}
       <div><dt>付款方式</dt><dd>${esc(paymentLabel(o.payment_method))}</dd></div>
       <div><dt>LINE</dt><dd>${o.customer_uid ? '✓ 已用 LINE 登入（付款、出貨時會自動通知客人）' : '未用 LINE 登入（不會自動通知）'}</dd></div>
+      ${memberLinkHtml(o, phone)}
       ${o.note ? `<div><dt>客人備註</dt><dd>${esc(o.note)}</dd></div>` : ''}
     </dl>`;
+}
+
+// 這支電話是儲值會員時：顯示客人能不能在「我的訂單」看到餘額，還沒綁定就提供綁定按鈕
+function memberLinkHtml(o, phone) {
+  const member = members.get(phone);
+  if (!member || !o.customer_uid) return '';
+  const linked = (member.line_uids ?? []).includes(o.customer_uid);
+  return `<div><dt>儲值金</dt><dd>餘額 ${money(member.balance)}・${linked
+    ? '✓ 客人可在「我的訂單」查看餘額'
+    : '<button type="button" class="btn-secondary btn-link-member" data-action="link-member">🔗 讓客人在「我的訂單」看到餘額</button>'}</dd></div>`;
 }
 
 // 儲值相關操作：儲值申請 → 確認入帳並加值；儲值金扣款訂單 → 從儲值金扣款
@@ -468,8 +514,21 @@ async function onOrderClick(e) {
     await runBalanceChange(button, {
       phone: o.customer?.phone, name: o.customer?.name, amount: credit, type: '儲值', orderId: id, orderNo: o.order_no,
       note: `儲值 ${money(o.topup?.plan_amount)} 加贈 ${money(o.topup?.bonus)}`, orderUpdate: { status: '已完成' },
+      linkCustomer: true, // 客人用 LINE 申請儲值並入帳後，就能在「我的訂單」看到餘額
       success: `已為 ${o.customer?.name} 加值 ${money(credit)}`
     });
+  }
+  if (button.dataset.action === 'link-member') {
+    const phone = normalizePhone(o.customer?.phone);
+    if (!confirm(`確認 ${phone} 是 ${o.customer?.name} 本人的電話嗎？\n綁定後，這位客人可以在「我的訂單」查看這支電話的儲值金餘額。`)) return;
+    button.disabled = true;
+    try {
+      await updateDoc(doc(ctx.db, 'members', phone), { line_uids: arrayUnion(o.customer_uid) });
+      ctx.showToast(`已綁定，${o.customer?.name} 可以在「我的訂單」看到儲值金餘額`);
+    } catch (error) {
+      ctx.showToast('綁定失敗：' + errorText(error), 'error');
+      button.disabled = false;
+    }
   }
   if (button.dataset.action === 'charge-stored-value') {
     const total = Number(o.amounts?.total) || 0;
@@ -501,7 +560,8 @@ function orderPlainText(o) {
 // ========== 儲值金餘額 ==========
 
 // 加值或扣款：在同一個交易裡更新餘額、寫入紀錄、標記訂單，避免重複加值或扣款
-async function changeBalance({ phone, name, amount, type, orderId, orderNo, note, orderUpdate }) {
+// 會員資料上另存最近 10 筆給客人看（不含經手人與內部備註）；詳細紀錄在 transactions，只有管理員看得到
+async function changeBalance({ phone, name, amount, type, orderId, orderNo, note, orderUpdate, linkCustomer }) {
   const memberId = normalizePhone(phone);
   if (!isValidPhone(memberId)) throw new ShopError('電話格式不正確，無法辨識儲值會員');
   if (!Number.isFinite(amount) || amount === 0) throw new ShopError('金額不正確');
@@ -519,10 +579,15 @@ async function changeBalance({ phone, name, amount, type, orderId, orderNo, note
     const next = current + amount;
     if (next < 0) throw new ShopError(`儲值金餘額不足（目前 ${money(current)}，需要 ${money(-amount)}）`);
 
+    const lineUid = linkCustomer ? orderSnap?.data().customer_uid : null;
+    const recent = [{ type, amount, balance_after: next, order_no: orderNo || '', at: Date.now() },
+      ...(memberSnap.data()?.recent_tx ?? [])].slice(0, 10);
     tx.set(memberRef, {
       phone: memberId,
       name: name || memberSnap.data()?.name || '',
       balance: next,
+      recent_tx: recent,
+      ...(lineUid ? { line_uids: arrayUnion(lineUid) } : {}),
       updated_at: serverTimestamp()
     }, { merge: true });
     tx.set(doc(collection(ctx.db, 'members', memberId, 'transactions')), {
@@ -604,11 +669,30 @@ function renderMembers() {
     list.innerHTML = rows.map(([phone, m]) => `
       <details class="member-item" data-phone="${esc(phone)}">
         <summary>
-          <span><strong>${esc(m.name || '（未填姓名）')}</strong> <small class="hint">${esc(phone)}</small></span>
+          <span><strong>${esc(m.name || '（未填姓名）')}</strong> <small class="hint">${esc(phone)}</small>${m.line_uids?.length ? '<span class="line-tag">LINE</span>' : ''}</span>
           <span class="member-balance${Number(m.balance) ? '' : ' zero'}">${money(m.balance)}</span>
         </summary>
+        <div class="member-actions">${m.line_uids?.length
+          ? `<span>已綁定 ${m.line_uids.length} 個 LINE 帳號，客人可在「我的訂單」查看餘額</span><button type="button" class="btn-secondary" data-unlink-member>解除綁定</button>`
+          : '<span>尚未綁定 LINE：客人用 LINE 申請儲值並入帳後會自動綁定，也可以在客人的訂單裡手動綁定</span>'}</div>
         <ul class="tx-list" data-tx-list><li>交易紀錄載入中…</li></ul>
       </details>`).join('');
+  }
+}
+
+async function onMemberClick(e) {
+  const button = e.target.closest('[data-unlink-member]');
+  if (!button) return;
+  const phone = button.closest('.member-item').dataset.phone;
+  const m = members.get(phone);
+  if (!confirm(`確定解除 ${m?.name || phone} 的 LINE 綁定？\n解除後客人在「我的訂單」就看不到儲值金餘額（餘額不受影響）。`)) return;
+  button.disabled = true;
+  try {
+    await updateDoc(doc(ctx.db, 'members', phone), { line_uids: [] });
+    ctx.showToast('已解除 LINE 綁定');
+  } catch (error) {
+    ctx.showToast('解除失敗：' + errorText(error), 'error');
+    button.disabled = false;
   }
 }
 
@@ -723,6 +807,7 @@ async function onTestNotify() {
       ${row(r.firebase, '讀寫訂單資料（Firebase 服務帳戶）', r.firebaseError ? esc(r.firebaseError) : '指令碼屬性 FIREBASE_SERVICE_ACCOUNT 還沒填或格式不對')}
       ${row(r.linePush, 'LINE 機器人傳訊息給客人', '指令碼屬性 LINE_CHANNEL_ACCESS_TOKEN 還沒填或已失效')}
       ${row(r.lineLogin, 'LINE 登入', '指令碼屬性 LINE_LOGIN_CHANNEL_ID 還沒填')}
+      ${row(r.reminder, '每天早上 9 點寄送待處理訂單提醒', '在 Apps Script 執行一次 setupDailyReminder')}
     </ul>`;
   } catch {
     box.innerHTML = '<span class="no">✗ 無法取得檢查結果：請確認網址正確、Apps Script 已貼上最新版程式，並重新部署（誰可以存取選「所有人」）。</span>';
