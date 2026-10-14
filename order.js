@@ -6,6 +6,7 @@ import {
   normalizePhone, isValidPhone, paymentLabel
 } from './pricing.js';
 import { isLineLoginEnabled, getCustomer, requireCustomer, onCustomerChange } from './line-login.js';
+import { TW_DISTRICTS } from './tw-address.js';
 
 const LINE_ID = '@245rbror';
 const CART_KEY = 'entropy-cart-v1';
@@ -23,6 +24,7 @@ let orderSubmitter = null;  // 由 script.js 提供：把訂單存進 Firebase
 let lastOrder = null;       // 購物訂單完成頁顯示用
 let lastTopup = null;       // 儲值申請完成頁顯示用
 let isSubmitting = false;
+let orderHistory = () => []; // 由 script.js 提供：這位客人以前的訂單（新的在前），用來帶入上次的門市、地址
 
 const $ = (id) => document.getElementById(id);
 
@@ -146,6 +148,10 @@ export function setOrderSubmitter(fn) {
   orderSubmitter = fn;
 }
 
+export function setOrderHistoryProvider(fn) {
+  orderHistory = fn;
+}
+
 export function getShopSettings() {
   return settings;
 }
@@ -208,7 +214,14 @@ export function initOrder() {
 
   // ② 填寫資料
   const form = $('checkout-form');
-  form.addEventListener('change', () => { clearCheckoutError(); renderCheckoutSummary(); });
+  form.addEventListener('change', (e) => {
+    clearCheckoutError();
+    if (e.target.name === 'delivery') prefillFromHistory();
+    renderCheckoutSummary();
+  });
+  fillCountyOptions();
+  form.elements.home_county.addEventListener('change', () => fillDistrictOptions());
+  form.elements.home_district.addEventListener('change', updateZip);
   form.addEventListener('input', clearCheckoutError);
   form.addEventListener('submit', submitOrder);
   $('btn-back-cart').addEventListener('click', () => showStep('cart'));
@@ -337,6 +350,7 @@ async function goToCheckout() {
   showStep('checkout');
   const nameField = $('checkout-form').elements.customer_name;
   if (!nameField.value && getCustomer()?.name) nameField.value = getCustomer().name;
+  prefillFromHistory();
 }
 
 function renderLoginRequirement() {
@@ -450,13 +464,18 @@ function showCheckoutError(message, field) {
 
 function readCheckout() {
   const form = $('checkout-form').elements;
+  const storeName = form.cvs_store.value.trim().replace(/^(全家便利商店|全家)\s*/, '');
+  const storeId = form.cvs_store_id.value.replace(/\s/g, '');
+  const county = form.home_county.value;
+  const district = form.home_district.value;
+  const detail = addressDetail(county, district, form.home_address.value);
   const data = {
     delivery: checkoutValue('delivery') || 'pickup',
     payment_method: checkoutValue('payment_method') || 'transfer',
     name: form.customer_name.value.trim(),
     phone: normalizePhone(form.customer_phone.value),
-    store: form.cvs_store.value.trim(),
-    address: form.home_address.value.trim(),
+    store: composeStore(storeName, storeId),
+    address: county && district ? `${zipOf(county, district)} ${county}${district}${detail}` : '',
     note: form.order_note.value.trim()
   };
 
@@ -464,9 +483,100 @@ function readCheckout() {
   if (cart.length === 0) return showCheckoutError('購物車是空的'), null;
   if (!data.name) return showCheckoutError('請填寫訂購人姓名', form.customer_name), null;
   if (!isValidPhone(data.phone)) return showCheckoutError('請填寫正確的聯絡電話（例如 0912345678）', form.customer_phone), null;
-  if (data.delivery === 'cvs' && !data.store) return showCheckoutError('請填寫全家門市名稱或店號', form.cvs_store), null;
-  if (data.delivery === 'home' && !data.address) return showCheckoutError('請填寫宅配收件地址', form.home_address), null;
+  if (data.delivery === 'cvs') {
+    if (!storeName) return showCheckoutError('請填寫全家門市名稱（可按「查詢全家門市」查詢）', form.cvs_store), null;
+    if (storeId && !/^\d{4,8}$/.test(storeId)) return showCheckoutError('店號請填數字（不知道可以空白）', form.cvs_store_id), null;
+  }
+  if (data.delivery === 'home') {
+    if (!county) return showCheckoutError('請選擇收件地址的縣市', form.home_county), null;
+    if (!district) return showCheckoutError('請選擇收件地址的鄉鎮市區', form.home_district), null;
+    if (detail.length < 3) return showCheckoutError('請填寫詳細地址（路、巷、弄、號、樓）', form.home_address), null;
+  }
   return data;
+}
+
+// ========== 全家門市與宅配地址 ==========
+
+function fillCountyOptions() {
+  $('checkout-form').elements.home_county.insertAdjacentHTML('beforeend',
+    Object.keys(TW_DISTRICTS).map(c => `<option value="${c}">${c}</option>`).join(''));
+}
+
+// 換縣市時更新鄉鎮市區選單；keep 是要選回的鄉鎮市區（帶入上次地址時用）
+function fillDistrictOptions(keep = '') {
+  const form = $('checkout-form').elements;
+  const list = TW_DISTRICTS[form.home_county.value] ?? [];
+  form.home_district.innerHTML = list.length
+    ? '<option value="">請選擇</option>' + list.map(([d, zip]) => `<option value="${d}">${zip} ${d}</option>`).join('')
+    : '<option value="">請先選縣市</option>';
+  form.home_district.disabled = list.length === 0;
+  form.home_district.value = list.some(([d]) => d === keep) ? keep : '';
+  updateZip();
+}
+
+function zipOf(county, district) {
+  return (TW_DISTRICTS[county] ?? []).find(([d]) => d === district)?.[1] ?? '';
+}
+
+function updateZip() {
+  const form = $('checkout-form').elements;
+  const zip = zipOf(form.home_county.value, form.home_district.value);
+  $('home-zip').textContent = zip ? `郵遞區號 ${zip}` : '';
+}
+
+// 客人在詳細地址又打了一次縣市、鄉鎮時去掉，避免重複
+function addressDetail(county, district, text) {
+  let detail = text.trim().replace(/^\d{3,6}\s*/, '').replace(/^台/, '臺');
+  if (county && detail.startsWith(county)) detail = detail.slice(county.length);
+  if (district && detail.startsWith(district)) detail = detail.slice(district.length);
+  return detail.trim();
+}
+
+// 訂單上存成一段文字，後台、Email、LINE 都直接顯示：「湖口光復店（店號 012345）」、「303 新竹縣湖口鄉光復東路73號」
+function composeStore(name, id) {
+  return id ? `${name}（店號 ${id}）` : name;
+}
+
+function parseStore(text) {
+  const m = String(text || '').match(/^(.*?)(?:（店號 (\d+)）)?$/);
+  return { name: (m?.[1] ?? '').trim(), id: m?.[2] ?? '' };
+}
+
+function parseAddress(text) {
+  const s = String(text || '').trim().replace(/^\d{3,6}\s*/, '').replace(/^台/, '臺');
+  const county = Object.keys(TW_DISTRICTS).find(c => s.startsWith(c));
+  if (!county) return null;
+  const rest = s.slice(county.length);
+  const district = TW_DISTRICTS[county].map(([d]) => d).find(d => rest.startsWith(d));
+  if (!district) return null;
+  return { county, district, detail: rest.slice(district.length).trim() };
+}
+
+// 用 LINE 登入的老客人：帶入上次訂單用過的電話、全家門市、宅配地址（欄位是空的才帶入）
+function prefillFromHistory() {
+  const history = orderHistory();
+  if (!history.length) return;
+  const form = $('checkout-form').elements;
+  if (!form.customer_phone.value && history[0].customer?.phone) form.customer_phone.value = history[0].customer.phone;
+
+  const delivery = checkoutValue('delivery');
+  if (delivery === 'cvs' && !form.cvs_store.value) {
+    const last = history.find(o => o.delivery === 'cvs' && o.customer?.store);
+    if (last) {
+      const store = parseStore(last.customer.store);
+      form.cvs_store.value = store.name;
+      form.cvs_store_id.value = store.id;
+    }
+  }
+  if (delivery === 'home' && !form.home_county.value && !form.home_address.value) {
+    const last = history.find(o => o.delivery === 'home' && o.customer?.address);
+    const address = last && parseAddress(last.customer.address);
+    if (address) {
+      form.home_county.value = address.county;
+      fillDistrictOptions(address.district);
+      form.home_address.value = address.detail;
+    }
+  }
 }
 
 function buildOrder(data) {
@@ -646,6 +756,7 @@ function finishOrder(order) {
   removedNotice = '';
   saveCart();
   $('checkout-form').reset();
+  fillDistrictOptions(); // 清空後鄉鎮市區選單也要跟著重設
   renderCart();
 
   $('done-title').textContent = '訂單已送出，謝謝您的訂購！';

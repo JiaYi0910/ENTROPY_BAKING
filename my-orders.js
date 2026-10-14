@@ -52,6 +52,11 @@ export function initMyOrders(fs) {
   onCustomerChange(subscribe);
 }
 
+// 給結帳頁帶入上次的電話、門市、地址
+export function getMyOrders() {
+  return Array.isArray(myOrders) ? myOrders : [];
+}
+
 export function openMyOrders() {
   render();
   const dialog = $('orders-dialog');
@@ -213,6 +218,8 @@ function orderCardHtml(o) {
       </div>
       <div class="my-order-meta">${meta}</div>
       <ul class="my-order-items">${items}</ul>
+      ${o.customer?.store ? `<p class="my-order-dest">🏪 全家 ${escapeHtml(o.customer.store)}</p>` : ''}
+      ${o.customer?.address ? `<p class="my-order-dest">🏠 ${escapeHtml(o.customer.address)}</p>` : ''}
       <div class="my-order-total">合計 <strong>${money(o.amounts?.total)}</strong></div>
       <p class="my-order-hint">${escapeHtml(statusHint(o))}</p>
       ${needsTransfer ? `

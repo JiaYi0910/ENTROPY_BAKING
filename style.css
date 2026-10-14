@@ -1684,6 +1684,74 @@ body:has(dialog[open]) {
     display: none;
 }
 
+/* 全家門市、宅配地址：一組欄位 */
+.address-group {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background-color: var(--surface-warm);
+}
+
+.address-group legend {
+    padding: 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.address-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.store-search {
+    justify-self: start;
+    padding: 6px 14px;
+    border: 1px solid var(--accent-color);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-hover);
+    text-decoration: none;
+}
+
+.store-search:hover {
+    background-color: var(--accent-soft);
+}
+
+.zip-code {
+    margin-left: 6px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.checkout-fields select {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 11px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background-color: var(--bg-color);
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text-main);
+    outline: none;
+}
+
+.checkout-fields select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(176, 137, 104, 0.15);
+}
+
+.checkout-fields select:disabled {
+    color: var(--text-muted);
+}
+
 .checkout-fields input,
 .checkout-fields textarea {
     display: block;
@@ -1999,6 +2067,12 @@ section[data-step="done"] > .btn-block {
 
 .my-order-total {
     font-size: 14px;
+    color: var(--text-muted);
+}
+
+.my-order-dest {
+    margin: -4px 0 10px;
+    font-size: 13px;
     color: var(--text-muted);
 }
 

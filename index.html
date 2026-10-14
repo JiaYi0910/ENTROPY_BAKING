@@ -354,12 +354,34 @@
 						<label>聯絡電話 <span class="required">*</span>
 							<input type="tel" name="customer_phone" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="例如：0912345678">
 						</label>
-						<label class="full" id="field-store" hidden>全家門市名稱或店號 <span class="required">*</span>
-							<input type="text" name="cvs_store" maxlength="40" placeholder="例如：全家湖口光復店">
-						</label>
-						<label class="full" id="field-address" hidden>宅配收件地址 <span class="required">*</span>
-							<input type="text" name="home_address" autocomplete="street-address" maxlength="100">
-						</label>
+						<!-- 全家店到店：到全家官網查門市，填門市名稱（和店號） -->
+						<fieldset class="full address-group" id="field-store" hidden>
+							<legend>全家取貨門市 <span class="required">*</span></legend>
+							<a class="store-search" href="https://www.family.com.tw/Marketing/zh/Map" target="_blank" rel="noopener noreferrer">🔍 查詢全家門市 ↗</a>
+							<div class="address-row">
+								<label>門市名稱
+									<input type="text" name="cvs_store" maxlength="30" placeholder="例如：湖口光復店">
+								</label>
+								<label>店號（選填）
+									<input type="text" name="cvs_store_id" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="6 碼數字">
+								</label>
+							</div>
+						</fieldset>
+						<!-- 宅配：縣市、鄉鎮市區用選的，郵遞區號自動帶入 -->
+						<fieldset class="full address-group" id="field-address" hidden>
+							<legend>宅配收件地址 <span class="required">*</span></legend>
+							<div class="address-row">
+								<label>縣市
+									<select name="home_county" autocomplete="address-level1"><option value="">請選擇</option></select>
+								</label>
+								<label>鄉鎮市區
+									<select name="home_district" autocomplete="address-level2" disabled><option value="">請先選縣市</option></select>
+								</label>
+							</div>
+							<label>詳細地址 <small class="zip-code" id="home-zip"></small>
+								<input type="text" name="home_address" autocomplete="address-line1" maxlength="80" placeholder="路、街、巷、弄、號、樓">
+							</label>
+						</fieldset>
 						<label class="full">備註
 							<textarea name="order_note" rows="2" maxlength="200" placeholder="例如：使用儲值金扣款、希望的研磨粗細…"></textarea>
 						</label>

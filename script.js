@@ -1,7 +1,7 @@
-import { initOrder, openProductDialog, syncProducts, setShopSettings, setOrderSubmitter, escapeHtml, getShopSettings, handleAfterLogin } from "./order.js";
+import { initOrder, openProductDialog, syncProducts, setShopSettings, setOrderSubmitter, setOrderHistoryProvider, escapeHtml, getShopSettings, handleAfterLogin } from "./order.js";
 import { money, unitPrice } from "./pricing.js";
 import { initCustomerAuth, configureLineLogin, setAfterLoginHandler } from "./line-login.js";
-import { setupMyOrdersUi, initMyOrders, openMyOrders } from "./my-orders.js";
+import { setupMyOrdersUi, initMyOrders, openMyOrders, getMyOrders } from "./my-orders.js";
 
 // 全域變數：存放從 Firebase 抓下來的商品
 let allProducts = [];
@@ -204,6 +204,7 @@ if (coffeeContainer) {
 
 initOrder();
 setupMyOrdersUi();
+setOrderHistoryProvider(getMyOrders); // 老客人結帳時帶入上次的門市、地址
 
 // LINE 登入回來後，接著做原本要做的事（回到結帳、打開我的訂單、申請儲值）
 setAfterLoginHandler((action) => whenMenuVisible(() => (action === 'orders' ? openMyOrders() : handleAfterLogin(action))));
